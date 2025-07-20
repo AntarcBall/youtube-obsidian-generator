@@ -3,12 +3,12 @@
     "font_size": 13,
     "theme": "dark",
     "gemini_model": "gemini-2.5-flash",
-    "obsidian_path": "C:/Users/bounc/OneDrive/문서/GNifiedNotes",
+    "obsidian_path": "C:/Users/bounc/OneDrive/Document/GNifiedNotes",
     "gemini_batch_size": 20,
     "youtube_url": "https://www.youtube.com/@gogo_work/videos",
     "min_video_duration": 120,
     "run_ip_test": false,
-    "list_load_batch_size": 50,
+    "list_load_batch_size": 210,
     "include_shorts": false,
     "keep_original_title": true
 }

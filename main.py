@@ -22,7 +22,7 @@ def load_config(filepath="config.json"):
     defaults = {
         "font_size": 12, 
         "theme": "dark",
-        "obsidian_path": "C:/Users/bounc/OneDrive/문서/SummerVCT/Notes",
+        "obsidian_path": "C:/Users/bounc/OneDrive/Document/SummerVCT/Notes",
         "gemini_batch_size": 30,
         "youtube_url": "https://www.youtube.com/@slow_doctor",
         "min_video_duration": 120, # Default to 2 minutes (120 seconds)
@@ -421,6 +421,10 @@ class App(tk.Tk):
             elif msg_type == "done":
                 self.log_message(f"\n--- {data} ---")
                 messagebox.showinfo("완료", data)
+            elif msg_type == "shutdown":
+                self.log_message(f"\n--- {data} ---")
+                messagebox.showerror("종료", data)
+                self.destroy()
 
         except queue.Empty:
             pass
