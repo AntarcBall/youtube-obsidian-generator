@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Application Configuration",
+  "description": "Schema for the application's configuration file",
+  "type": "object",
+  "properties": {
+    "font_size": {
+      "type": "integer",
+      "description": "Font size for the application."
+    },
+    "theme": {
+      "type": "string",
+      "enum": ["dark", "light"],
+      "description": "Application theme."
+    },
+    "gemini_model": {
+      "type": "string",
+      "description": "Gemini model to use."
+    },
+    "obsidian_path": {
+      "type": "string",
+      "description": "Path to Obsidian notes."
+    },
+    "gemini_batch_size": {
+      "type": "integer",
+      "description": "Batch size for Gemini."
+    },
+    "youtube_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "YouTube base URL."
+    },
+    "min_video_duration": {
+      "type": "integer",
+      "description": "Minimum video duration in seconds."
+    },
+    "run_ip_test": {
+      "type": "boolean",
+      "description": "Whether to run an IP test."
+    },
+    "list_load_batch_size": {
+      "type": "integer",
+      "description": "Batch size for loading lists."
+    },
+    "include_shorts": {
+      "type": "boolean",
+      "description": "Whether to include YouTube Shorts."
+    },
+    "keep_original_title": {
+      "type": "boolean",
+      "description": "Whether to keep the original video title."
+    }
+  },
+  "required": [
+    "font_size",
+    "theme",
+    "gemini_model",
+    "obsidian_path",
+    "gemini_batch_size",
+    "youtube_url",
+    "min_video_duration",
+    "run_ip_test",
+    "list_load_batch_size",
+    "include_shorts",
+    "keep_original_title"
+  ]
+}

@@ -28,7 +28,7 @@ def load_config(filepath="config.json"):
         "min_video_duration": 120, # Default to 2 minutes (120 seconds)
         "run_ip_test": True, # Default to True
         "gemini_model": "gemini-2.5-flash", # Default Gemini model
-        "list_load_batch_size": 30, # Default to 30
+        "list_load_batch_size": 50, # Default to 50
         "include_shorts": False, # Default to False
         "keep_original_title": False # Default to False
     }
