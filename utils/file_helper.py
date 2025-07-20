@@ -87,3 +87,32 @@ def save_as_obsidian_note(path, content, keep_original_title=False, original_tit
         f.write(content)
     
     print(f"파일 저장 완료: {file_path}")
+
+def get_cache_dir():
+    """캐시 디렉토리 경로를 반환하고, 없으면 생성합니다."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    cache_path = os.path.join(script_dir, "..", "cache")
+    if not os.path.exists(cache_path):
+        os.makedirs(cache_path)
+    return cache_path
+
+def load_videos_from_cache(channel_id):
+    """채널 ID에 해당하는 캐시된 영상 목록을 로드합니다."""
+    cache_file = os.path.join(get_cache_dir(), f"{channel_id}.json")
+    if os.path.exists(cache_file):
+        try:
+            with open(cache_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("videos"), data.get("next_page_token")
+        except (json.JSONDecodeError, IOError):
+            return None, None
+    return None, None
+
+def save_videos_to_cache(channel_id, videos, next_page_token):
+    """영상 목록과 다음 페이지 토큰을 캐시 파일에 저장합니다."""
+    cache_file = os.path.join(get_cache_dir(), f"{channel_id}.json")
+    try:
+        with open(cache_file, 'w', encoding='utf-8') as f:
+            json.dump({"videos": videos, "next_page_token": next_page_token}, f, ensure_ascii=False, indent=4)
+    except IOError as e:
+        print(f"캐시 파일 저장 오류: {e}")

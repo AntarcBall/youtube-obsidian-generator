@@ -308,4 +308,8 @@ def extract_transcript_text(transcript, video_id):
         
     except Exception as e:
         print(f"[자막 추출] 오류 발생: {e}")
+        # Check for the specific "no element found" error
+        if "no element found" in str(e):
+            print(f"[자막 추출] XML 파싱 오류: 자막이 비어있을 수 있습니다.")
+            return None, 0
         return None, 0

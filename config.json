@@ -7,7 +7,7 @@
     "gemini_batch_size": 20,
     "youtube_url": "https://www.youtube.com/@gogo_work/videos",
     "min_video_duration": 120,
-    "run_ip_test": false,
+    "run_ip_test": true,
     "list_load_batch_size": 50,
     "include_shorts": false,
     "keep_original_title": true

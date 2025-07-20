@@ -14,6 +14,7 @@ import sys
 
 sys.stdout.reconfigure(encoding='utf-8')
 from utils import youtube_helper, gemini_helper, file_helper
+from utils.file_helper import load_videos_from_cache, save_videos_to_cache
 
 def load_config(filepath="config.json"):
     """JSON 파일에서 설정을 로드합니다."""
@@ -103,7 +104,7 @@ class App(tk.Tk):
 
         self.all_videos = [] # 모든 로드된 영상을 저장할 리스트
         self.next_page_token = None # 다음 페이지 로드를 위한 토큰
-        self.channel_url_for_batch = None # 현재 로드 중인 채널 URL
+        self.channel_id = None # 현재 로드 중인 채널 ID
 
     def update_styles(self):
         """UI의 폰트와 색상 테마를 업데이트합니다."""
@@ -226,22 +227,42 @@ class App(tk.Tk):
             return
 
         self.confirm_btn1.config(state="disabled", text="불러오는 중...")
-        self.all_videos = [] # 새 채널 로드 시 초기화
-        self.next_page_token = None # 새 채널 로드 시 초기화
-        self.channel_url_for_batch = self.channel_url # 현재 로드 중인 채널 URL 저장
+        self.all_videos = []
+        self.next_page_token = None
+        
         threading.Thread(target=self.fetch_videos_thread, daemon=True).start()
 
     def fetch_videos_thread(self):
         try:
-            batch_size = CONFIG.get("list_load_batch_size", 30)
+            self.channel_id = youtube_helper.get_channel_id_from_url(self.channel_url)
+            if not self.channel_id:
+                raise ValueError("유효한 채널 URL이 아니거나 채널 ID를 찾을 수 없습니다.")
+
+            # 캐시에서 먼저 로드 시도
+            cached_videos, cached_token = file_helper.load_videos_from_cache(self.channel_id)
+            if cached_videos:
+                self.q.put(("log", f"'{self.channel_id}' 채널의 캐시된 데이터를 불러왔습니다."))
+                self.all_videos = cached_videos
+                self.next_page_token = cached_token
+                self.q.put(("videos_fetched", self.all_videos))
+                return
+
+            # 캐��가 없으면 API 호출
+            self.q.put(("log", "캐시된 데이터가 없습니다. API를 통해 영상 목록을 가져옵니다."))
+            batch_size = CONFIG.get("list_load_batch_size", 50)
             videos_batch, self.next_page_token = youtube_helper.get_videos_from_channel(
-                self.channel_url_for_batch, 
+                self.channel_url, 
                 self.include_shorts.get(), 
                 self.min_video_duration, 
                 max_results=batch_size, 
-                page_token=self.next_page_token
+                page_token=None
             )
             self.all_videos.extend(videos_batch)
+            
+            # API 호출 결과를 캐시에 저장
+            file_helper.save_videos_to_cache(self.channel_id, self.all_videos, self.next_page_token)
+            self.q.put(("log", "영상 목록을 캐시에 저장했습니다."))
+            
             self.q.put(("videos_fetched", videos_batch))
         except Exception as e:
             self.q.put(("error", f"영상 목록 로딩 실패: {e}"))
@@ -280,25 +301,34 @@ class App(tk.Tk):
         
         # 초기 로드 후 추가 로드 버튼 상태 업데이트
         if not self.next_page_token:
-            self.load_more_btn.config(state="disabled")
+            self.load_more_btn.config(state="disabled", text="더 이상 영상 없음")
             
         return scene2
 
     def load_more_videos(self):
+        if not self.next_page_token:
+            messagebox.showinfo("정보", "더 이상 불러올 영상이 없습니다.")
+            return
         self.load_more_btn.config(state="disabled", text="로딩 중...")
         threading.Thread(target=self._load_more_videos_thread, daemon=True).start()
 
     def _load_more_videos_thread(self):
         try:
-            batch_size = CONFIG.get("list_load_batch_size", 30)
+            self.q.put(("log", "API를 통해 추가 영상 목록을 가져옵니다."))
+            batch_size = CONFIG.get("list_load_batch_size", 50)
             videos_batch, self.next_page_token = youtube_helper.get_videos_from_channel(
-                self.channel_url_for_batch, 
+                self.channel_url, 
                 self.include_shorts.get(), 
                 self.min_video_duration, 
                 max_results=batch_size, 
                 page_token=self.next_page_token
             )
             self.all_videos.extend(videos_batch)
+            
+            # 추가 로드 후 캐시 업데이트
+            file_helper.save_videos_to_cache(self.channel_id, self.all_videos, self.next_page_token)
+            self.q.put(("log", "영상 목록을 캐시에 저장했습니다."))
+            
             self.q.put(("add_videos_to_tree", videos_batch))
         except Exception as e:
             self.q.put(("error", f"추가 영상 로딩 실패: {e}"))
@@ -341,8 +371,9 @@ class App(tk.Tk):
             try:
                 transcript, _ = youtube_helper.get_transcript(video_id)
                 if not transcript:
-                    self.q.put(("log", f"  - 경고: '{video_title}' 스크립트를 찾을 수 없어 건너뜁니다."))
-                    continue
+                    self.q.put(("log", f"  - ✗ 오류: '{video_title}' 스크립트를 찾을 수 없어 프로그램을 종료합니다."))
+                    self.q.put(("shutdown", "API 오류로 인해 프로그램을 종료합니다."))
+                    return
                 
                 prompt_with_title = f"영상 제목: {video_title}\n\n{self.user_prompt}"
                 full_prompt = f"{prompt_with_title}\n\n--- 원본 스크립트 ---\n{transcript}\n--- 원본 스크립트 끝 ---"
@@ -421,6 +452,10 @@ class App(tk.Tk):
             elif msg_type == "done":
                 self.log_message(f"\n--- {data} ---")
                 messagebox.showinfo("완료", data)
+            elif msg_type == "shutdown":
+                self.log_message(f"\n--- {data} ---")
+                messagebox.showerror("종료", data)
+                self.destroy()
 
         except queue.Empty:
             pass
