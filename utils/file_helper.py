@@ -38,7 +38,7 @@ def _sanitize_filename(title, insert_dash):
         filename = re.sub(r'\s+', '-', sanitized_title)
         filename = re.sub(r'-+', '-', filename).strip('-')
     else:
-        filename = re.sub(r'\s+', '', sanitized_title) # Remove spaces
+        filename = sanitized_title
     # 너무 길 경우 자르기 (예: 200자)
     filename = (filename[:200]) if len(filename) > 200 else filename
     return filename
