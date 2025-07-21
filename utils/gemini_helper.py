@@ -63,20 +63,41 @@ JSON
     
     try:
         # 응답 텍스트에서 JSON 부분만 추출
-        # 응답이 "JSON\n[...]" 또는 "```json\n[...]형식일 수 있음
+        # 응답이 "JSON\n[...]" 또는 "```json\n[...]```" 형식일 수 있음
         response_text = "".join([part.text for part in response.parts])
+        
+        # 응답이 비어있는 경우 처리
+        if not response_text.strip():
+            raise ValueError("Received empty response from Gemini API.")
+
         if '```json' in response_text:
             json_part = response_text.split('```json')[1].split('```')[0].strip()
         elif 'JSON' in response_text:
-            json_part = response_text.split('JSON')[1].strip()
+            # 'JSON'이라는 단어 바로 뒤부터 시작하는 JSON 콘텐츠를 찾음
+            # 대소문자를 구분하지 않고, 유연하게 찾기
+            json_start_index = response_text.upper().find('JSON') + 4
+            # JSON 시작 부분( '[' 또는 '{' )을 찾음
+            first_bracket = -1
+            for char in ['[', '{']:
+                pos = response_text.find(char, json_start_index)
+                if pos != -1:
+                    if first_bracket == -1 or pos < first_bracket:
+                        first_bracket = pos
+            
+            if first_bracket != -1:
+                json_part = response_text[first_bracket:]
+            else:
+                json_part = response_text # 순수 JSON만 반환된 경우로 가정
+
         else:
             json_part = response_text # 순수 JSON만 반환된 경우
 
         results = json.loads(json_part)
         print(f"[Gemini] Batch response received and parsed successfully.")
         return results
-    except (json.JSONDecodeError, IndexError) as e:
+    except (json.JSONDecodeError, IndexError, ValueError) as e:
         print(f"[Gemini] Error parsing batch response: {e}")
-        print(f"[Gemini] Raw response text: {response.text}")
+        # response.text 대신 response_text 사용
+        print(f"[Gemini] Raw response text: {response_text}")
         # 오류 발생 시, 각 태스크에 대해 오류 메시지를 포함한 결과 반환
         return [{"id": task["id"], "result": f"Error processing batch response: {e}"} for task in tasks]

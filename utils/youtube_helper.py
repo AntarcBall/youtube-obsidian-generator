@@ -3,7 +3,7 @@
 # 유튜브 관련 데이터를 처리하는 함수들을 포함합니다.
 
 from googleapiclient.discovery import build
-from pytube import YouTube
+from pytubefix import YouTube
 import re
 import subprocess
 from isodate import parse_duration
@@ -141,27 +141,36 @@ def get_videos_from_channel(channel_url, include_shorts=False, min_duration_seco
 
 def get_transcript(video_id, proxy_url=None):
     """
-    pytube를 사용하여 주어진 영상 ID의 스크립트를 추출하고, 실패 시 yt-dlp로 대체합니다.
+    pytubefix를 사용하여 주어진 영상 ID의 스크립트를 추출하고, 실패 시 yt-dlp로 대체합니다.
     """
     try:
         video_url = f'https://www.youtube.com/watch?v={video_id}'
         yt = YouTube(video_url)
-        caption = yt.captions.get_by_language_code('ko')
-        if not caption:
-            caption = yt.captions.get_by_language_code('en')
-        if not caption and yt.caption_tracks:
-            caption = yt.caption_tracks[0]
+        
+        available_captions = yt.captions
+        caption = None
+
+        if available_captions:
+            if 'ko' in available_captions:
+                caption = available_captions['ko']
+            elif 'a.ko' in available_captions:
+                caption = available_captions['a.ko']
+            elif 'en' in available_captions:
+                caption = available_captions['en']
+            else:
+                caption = list(available_captions)[0]
 
         if caption:
             srt_captions = caption.generate_srt_captions()
             text_only = re.sub(r'\d+\n\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}\n', '', srt_captions)
             text_only = text_only.replace('\n', ' ').strip()
             return text_only, len(text_only.split())
+            
     except Exception as e:
-        print(f"pytube로 자막을 가져오는 중 오류 발생 (ID: {video_id}): {e}")
+        print(f"pytubefix로 자막을 가져오는 중 오류 발생 (ID: {video_id}): {e}")
         print("yt-dlp를 사용하여 다시 시도합니다...")
 
-    # pytube 실패 시 yt-dlp 사용
+    # pytubefix 실패 시 yt-dlp 사용
     try:
         command = [
             'yt-dlp',

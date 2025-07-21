@@ -360,7 +360,7 @@ class App(tk.Tk):
             self.q.put(("log", f"  - Gemini API로 {len(tasks)}개 작업 배치 요청..."))
             results = gemini_helper.process_batch_with_gemini(tasks, self.gemini_model_var.get())
             
-            result_map = {res['id']: res['result'] for res in results}
+            result_map = {res['id']: res.get('result', f"No result found for ID {res.get('id')}") for res in results}
 
             for task in tasks:
                 video_id = task['id']
@@ -368,6 +368,12 @@ class App(tk.Tk):
                 
                 if video_id in result_map:
                     processed_content = result_map[video_id]
+                    
+                    # 결과에 오류 메시지가 포함되어 있는지 확인
+                    if "Error processing batch response" in processed_content:
+                        self.q.put(("log", f"  - ✗ 오류: '{video_title}' 처리 중 API 오류 발생 - {processed_content}"))
+                        continue # 오류가 있으면 노트 저장을 건너뜀
+
                     self.q.put(("log", f"  - '{video_title}' 내용 가공 완료. 노트 저장 중..."))
                     file_helper.save_as_obsidian_note(self.obsidian_path, processed_content, self.keep_original_title.get(), video_title)
                     self.q.put(("log", f"  - ✓ 완료: '{video_title}' 노트 생성 완료"))
