@@ -5,10 +5,10 @@
     "gemini_model": "gemini-1.5-flash",
     "obsidian_path": "C:/Users/bounc/OneDrive/문서/GNifiedNotes",
     "gemini_batch_size": 50,
-    "youtube_url": "https://www.youtube.com/@1분미만",
+    "youtube_url": "https://www.youtube.com/@isaacarthurSFIA",
     "min_video_duration": 0,
     "run_ip_test": false,
-    "list_load_batch_size": 200,
+    "list_load_batch_size": 100,
     "include_shorts": false,
     "keep_original_title": true
 }

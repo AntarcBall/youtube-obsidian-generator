@@ -233,16 +233,26 @@ class App(tk.Tk):
 
     def fetch_videos_thread(self):
         try:
-            batch_size = CONFIG.get("list_load_batch_size", 30)
-            videos_batch, self.next_page_token = youtube_helper.get_videos_from_channel(
-                self.channel_url_for_batch, 
-                self.include_shorts.get(), 
-                self.min_video_duration, 
-                max_results=batch_size, 
-                page_token=self.next_page_token
-            )
-            self.all_videos.extend(videos_batch)
-            self.q.put(("videos_fetched", videos_batch))
+            # 1. 채널의 모든 영상 목록을 가져옵니다 (캐시 또는 API)
+            all_videos_raw = youtube_helper.get_videos_from_channel(self.channel_url)
+            
+            # 2. 필터링 및 'is_processed' 플래그 추가
+            processed_log = youtube_helper.load_processed_videos_log()
+            filtered_videos = []
+            for video in all_videos_raw:
+                # 쇼츠 영상 필터링
+                if not self.include_shorts.get() and video['title'].strip().endswith('#비밀치트키'):
+                    continue
+                # 최소 길이 필터링
+                if video.get('total_seconds', 0) < self.min_video_duration:
+                    continue
+                
+                # 이미 처리된 비디오인지 확인
+                video['is_processed'] = video['id'] in processed_log
+                filtered_videos.append(video)
+
+            self.all_videos = filtered_videos
+            self.q.put(("videos_fetched", filtered_videos))
         except Exception as e:
             self.q.put(("error", f"영상 목록 로딩 실패: {e}"))
 
@@ -250,7 +260,13 @@ class App(tk.Tk):
         scene2 = ttk.Frame(self, padding=(20, 20))
         scene2.pack(fill="both", expand=True)
 
-        ttk.Label(scene2, text="처리할 영상을 선택하세요. (캐시된 항목은 파란색으로 표시됩니다)", font=("Helvetica", int(self.font_size*1.3), "bold")).pack(pady=10, anchor='w')
+        top_frame = ttk.Frame(scene2)
+        top_frame.pack(fill='x', pady=(0, 10))
+
+        ttk.Label(top_frame, text="처리할 영상을 선택하세요. (이미 처리된 항목은 파란색으로 표시됩니다)", font=("Helvetica", int(self.font_size*1.3), "bold")).pack(side="left", anchor='w')
+        
+        self.selection_count_label = ttk.Label(top_frame, text="선택된 항목: 0개")
+        self.selection_count_label.pack(side="right", anchor='e')
 
         cols = ("제목", "영상 길이")
         self.tree = ttk.Treeview(scene2, columns=cols, show="headings")
@@ -259,9 +275,9 @@ class App(tk.Tk):
         self.tree.column("제목", width=600)
         self.tree.column("영상 길이", width=100, anchor='center')
         
-        # 캐시된 항목을 위한 태그 스타일 설정
-        cached_color = "#5DADE2" # 밝은 파란색
-        self.tree.tag_configure('cached', foreground=cached_color)
+        # 처리된 항목을 위한 태그 스타일 설정
+        processed_color = "#5DADE2" # 밝은 파란색
+        self.tree.tag_configure('processed', foreground=processed_color)
         
         self.tree.pack(fill="both", expand=True, pady=10)
 
@@ -270,43 +286,25 @@ class App(tk.Tk):
         scrollbar.pack(side='right', fill='y')
 
         for video in videos_batch:
-            tags = ('cached',) if video.get('is_cached') else ()
+            tags = ('processed',) if video.get('is_processed') else ()
             self.tree.insert("", "end", values=(video['title'], video['duration']), iid=video['id'], tags=tags)
         
+        self.tree.bind('<<TreeviewSelect>>', self.on_tree_select)
+
         ttk.Label(scene2, text="* Ctrl 또는 Shift 키를 사용하여 여러 영상을 선택할 수 있습니다.").pack(pady=5, anchor='w')
 
         button_frame = ttk.Frame(scene2)
         button_frame.pack(fill='x', pady=10)
 
         self.confirm_btn2 = ttk.Button(button_frame, text="선택한 영상 분석 시작", command=self.start_processing)
-        self.confirm_btn2.pack(side="left", expand=True, fill="x", ipady=5, padx=(0, 5))
-
-        self.load_more_btn = ttk.Button(button_frame, text="추가 로드", command=self.load_more_videos)
-        self.load_more_btn.pack(side="right", expand=True, fill="x", ipady=5, padx=(5, 0))
-        
-        if not self.next_page_token:
-            self.load_more_btn.config(state="disabled")
+        self.confirm_btn2.pack(expand=True, fill="x", ipady=5)
             
         return scene2
 
-    def load_more_videos(self):
-        self.load_more_btn.config(state="disabled", text="로딩 중...")
-        threading.Thread(target=self._load_more_videos_thread, daemon=True).start()
-
-    def _load_more_videos_thread(self):
-        try:
-            batch_size = CONFIG.get("list_load_batch_size", 30)
-            videos_batch, self.next_page_token = youtube_helper.get_videos_from_channel(
-                self.channel_url_for_batch, 
-                self.include_shorts.get(), 
-                self.min_video_duration, 
-                max_results=batch_size, 
-                page_token=self.next_page_token
-            )
-            self.all_videos.extend(videos_batch)
-            self.q.put(("add_videos_to_tree", videos_batch))
-        except Exception as e:
-            self.q.put(("error", f"추가 영상 로딩 실패: {e}"))
+    def on_tree_select(self, event):
+        """Treeview 선택 변경 시 호출되어 선택된 항목 수를 업데이트합니다."""
+        selected_items = self.tree.selection()
+        self.selection_count_label.config(text=f"선택된 항목: {len(selected_items)}개")
 
     def start_processing(self):
         selected_ids = self.tree.selection()
@@ -381,6 +379,10 @@ class App(tk.Tk):
 
                     self.q.put(("log", f"  - '{video_title}' 내용 가공 완료. 노트 저장 중..."))
                     file_helper.save_as_obsidian_note(self.obsidian_path, processed_content, self.keep_original_title.get(), video_title)
+                    
+                    # 성공적으로 저장된 비디오를 로그에 기록
+                    youtube_helper.log_processed_video(video_id)
+                    
                     self.q.put(("log", f"  - ✓ 완료: '{video_title}' 노트 생성 완료"))
                 else:
                     self.q.put(("log", f"  - ✗ 오류: '{video_title}' 처리 결과가 없습니다."))
@@ -412,20 +414,10 @@ class App(tk.Tk):
             msg_type, data = self.q.get_nowait()
             if msg_type == "videos_fetched":
                 self.switch_scene(self.create_scene2, data)
-            elif msg_type == "add_videos_to_tree":
-                for video in data:
-                    tags = ('cached',) if video.get('is_cached') else ()
-                    self.tree.insert("", "end", values=(video['title'], video['duration']), iid=video['id'], tags=tags)
-                if self.next_page_token:
-                    self.load_more_btn.config(state="normal", text="추가 로드")
-                else:
-                    self.load_more_btn.config(state="disabled", text="더 이상 영상 없음")
             elif msg_type == "error":
                 messagebox.showerror("오류", data)
                 if hasattr(self, 'confirm_btn1'):
                     self.confirm_btn1.config(state="normal", text="영상 목록 불러오기")
-                if hasattr(self, 'load_more_btn'):
-                    self.load_more_btn.config(state="normal", text="추가 로드") # 에러 발생 시 버튼 활성화
             elif msg_type == "log":
                 self.log_message(data)
             elif msg_type == "progress":
