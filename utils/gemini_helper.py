@@ -24,11 +24,14 @@ def load_gemini_model_from_config():
 def check_gemini_api():
     """
     Gemini API에 간단한 요청을 보내 접근성을 확인합니다.
+    config.json에 지정된 모델을 사용합니다.
     """
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model_name = load_gemini_model_from_config()
+        print(f"Checking Gemini API accessibility with model: {model_name}")
+        model = genai.GenerativeModel(model_name)
         model.generate_content("test")
-        return True, "Gemini API is accessible."
+        return True, f"Gemini API is accessible with model {model_name}."
     except Exception as e:
         return False, f"Failed to access Gemini API: {e}"
 
@@ -49,12 +52,22 @@ def process_batch_with_gemini(tasks, model_name=None):
 
     # Gemini API에 전달할 프롬프트 구성
     prompt = f"""
-너는 이제부터 질문 목록에 대해 JSON 형식으로만 답변하는 봇이야.
-다음은 처리해야 할 작업 목록이 담긴 JSON 배열이야. 각 항목의 'task'를 수행하고 'id'와 함께 결과를 JSON 배열 형식으로 반환해 줘.
-모든 결과 문자열의 내부 큰따옴표는 `"`로 이스케이프 처리해야 해.
+You are a bot that responds only in JSON format.
+Below is a JSON array of tasks to perform. Execute the 'task' for each item and return the results as a JSON array with the corresponding 'id'.
+The response MUST be a valid JSON array.
+Each 'result' string must be properly escaped to be valid within a JSON string. For example, double quotes must be escaped as \", and backslashes as \\.
 
-JSON
+Example Input:
+[
+  {{"id": "video1", "task": "Summarize: He said \"Hello World!\""}}
+]
 
+Example Output:
+[
+  {{"id": "video1", "result": "He said \\"Hello World!\\""}}
+]
+
+Here is the actual task list:
 {json.dumps(tasks, indent=2, ensure_ascii=False)}
 """
     

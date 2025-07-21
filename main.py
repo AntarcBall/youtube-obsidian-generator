@@ -250,7 +250,7 @@ class App(tk.Tk):
         scene2 = ttk.Frame(self, padding=(20, 20))
         scene2.pack(fill="both", expand=True)
 
-        ttk.Label(scene2, text="처리할 영상을 선택하세요.", font=("Helvetica", int(self.font_size*1.3), "bold")).pack(pady=10, anchor='w')
+        ttk.Label(scene2, text="처리할 영상을 선택하세요. (캐시된 항목은 파란색으로 표시됩니다)", font=("Helvetica", int(self.font_size*1.3), "bold")).pack(pady=10, anchor='w')
 
         cols = ("제목", "영상 길이")
         self.tree = ttk.Treeview(scene2, columns=cols, show="headings")
@@ -258,6 +258,11 @@ class App(tk.Tk):
         self.tree.heading("영상 길이", text="영상 길이")
         self.tree.column("제목", width=600)
         self.tree.column("영상 길이", width=100, anchor='center')
+        
+        # 캐시된 항목을 위한 태그 스타일 설정
+        cached_color = "#5DADE2" # 밝은 파란색
+        self.tree.tag_configure('cached', foreground=cached_color)
+        
         self.tree.pack(fill="both", expand=True, pady=10)
 
         scrollbar = ttk.Scrollbar(self.tree, orient="vertical", command=self.tree.yview)
@@ -265,7 +270,8 @@ class App(tk.Tk):
         scrollbar.pack(side='right', fill='y')
 
         for video in videos_batch:
-            self.tree.insert("", "end", values=(video['title'], video['duration']), iid=video['id'])
+            tags = ('cached',) if video.get('is_cached') else ()
+            self.tree.insert("", "end", values=(video['title'], video['duration']), iid=video['id'], tags=tags)
         
         ttk.Label(scene2, text="* Ctrl 또는 Shift 키를 사용하여 여러 영상을 선택할 수 있습니다.").pack(pady=5, anchor='w')
 
@@ -278,7 +284,6 @@ class App(tk.Tk):
         self.load_more_btn = ttk.Button(button_frame, text="추가 로드", command=self.load_more_videos)
         self.load_more_btn.pack(side="right", expand=True, fill="x", ipady=5, padx=(5, 0))
         
-        # 초기 로드 후 추가 로드 버튼 상태 업데이트
         if not self.next_page_token:
             self.load_more_btn.config(state="disabled")
             
@@ -409,7 +414,8 @@ class App(tk.Tk):
                 self.switch_scene(self.create_scene2, data)
             elif msg_type == "add_videos_to_tree":
                 for video in data:
-                    self.tree.insert("", "end", values=(video['title'], video['duration']), iid=video['id'])
+                    tags = ('cached',) if video.get('is_cached') else ()
+                    self.tree.insert("", "end", values=(video['title'], video['duration']), iid=video['id'], tags=tags)
                 if self.next_page_token:
                     self.load_more_btn.config(state="normal", text="추가 로드")
                 else:

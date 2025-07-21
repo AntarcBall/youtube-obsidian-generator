@@ -8,9 +8,39 @@ import re
 import subprocess
 from isodate import parse_duration
 from .file_helper import load_api_key
+import os
+import json
 
 YOUTUBE_API_KEY = load_api_key("myapi")
 youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
+
+# --- Cache Setup ---
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_DIR = os.path.join(SCRIPT_DIR, '..', 'cache')
+TRANSCRIPT_CACHE_PATH = os.path.join(CACHE_DIR, 'transcript_cache.json')
+
+if not os.path.exists(CACHE_DIR):
+    os.makedirs(CACHE_DIR)
+
+def load_transcript_cache():
+    """JSON 캐시 파일에서 스크립트 데이터를 로드합니다."""
+    if not os.path.exists(TRANSCRIPT_CACHE_PATH):
+        return {}
+    try:
+        with open(TRANSCRIPT_CACHE_PATH, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError):
+        return {}
+
+def save_transcript_to_cache(video_id, text_content, word_count):
+    """스크립트 데이터를 JSON 캐시에 저장합니다."""
+    cache = load_transcript_cache()
+    cache[video_id] = {"text": text_content, "word_count": word_count}
+    try:
+        with open(TRANSCRIPT_CACHE_PATH, 'w', encoding='utf-8') as f:
+            json.dump(cache, f, ensure_ascii=False, indent=4)
+    except IOError as e:
+        print(f"Error saving to transcript cache: {e}")
 
 def parse_iso8601_duration(duration_str):
     """ISO 8601 형식의 기간을 'HH:MM:SS' 또는 'MM:SS' 형태로 변환합니다."""
@@ -65,7 +95,7 @@ def get_channel_id_from_url(url):
 
 def get_videos_from_channel(channel_url, include_shorts=False, min_duration_seconds=0, max_results=50, page_token=None):
     """
-    채널의 영상 목록을 지정된 개수만큼 가져와 반환합니다.
+    채널의 영상 목록을 가져와 반환하고, 각 영상이 캐시되어 있는지 확인합니다.
     page_token을 사용하여 다음 페이지를 가져올 수 있습니다.
     """
     channel_id = get_channel_id_from_url(channel_url)
@@ -105,6 +135,9 @@ def get_videos_from_channel(channel_url, include_shorts=False, min_duration_seco
 
     next_page_token = res.get('nextPageToken')
     
+    # 캐시 로드
+    transcript_cache = load_transcript_cache()
+    
     videos = []
     for i in range(0, len(video_ids), 50): 
         chunk_ids = video_ids[i:i+50]
@@ -129,7 +162,8 @@ def get_videos_from_channel(channel_url, include_shorts=False, min_duration_seco
                     'id': video_id,
                     'title': video_titles.get(video_id, "제목 없음"),
                     'duration': duration_formatted,
-                    'total_seconds': total_seconds
+                    'total_seconds': total_seconds,
+                    'is_cached': video_id in transcript_cache
                 })
         except Exception as e:
             print(f"영상 길이 정보를 가져오는 중 오류 발생 (ID: {chunk_ids}): {e}")
@@ -141,8 +175,21 @@ def get_videos_from_channel(channel_url, include_shorts=False, min_duration_seco
 
 def get_transcript(video_id, proxy_url=None):
     """
-    pytubefix를 사용하여 주어진 영상 ID의 스크립트를 추출하고, 실패 시 yt-dlp로 대체합니다.
+    먼저 JSON 캐시에서 스크립트를 찾습니다.
+    캐시에 없으면 pytubefix를 사용하여 스크립트를 추출하고, 실패 시 yt-dlp로 대체합니다.
+    추출된 스크립트는 캐시에 저장됩니다.
     """
+    # 1. 캐시 확인
+    cache = load_transcript_cache()
+    if video_id in cache:
+        print(f"Transcript for '{video_id}' found in cache.")
+        cached_data = cache[video_id]
+        return cached_data.get("text"), cached_data.get("word_count")
+
+    # 2. 캐시에 없는 경우, 스크립트 추출
+    text_only = None
+    word_count = 0
+
     try:
         video_url = f'https://www.youtube.com/watch?v={video_id}'
         yt = YouTube(video_url)
@@ -164,35 +211,42 @@ def get_transcript(video_id, proxy_url=None):
             srt_captions = caption.generate_srt_captions()
             text_only = re.sub(r'\d+\n\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}\n', '', srt_captions)
             text_only = text_only.replace('\n', ' ').strip()
-            return text_only, len(text_only.split())
+            word_count = len(text_only.split())
             
     except Exception as e:
         print(f"pytubefix로 자막을 가져오는 중 오류 발생 (ID: {video_id}): {e}")
         print("yt-dlp를 사용하여 다시 시도합니다...")
 
-    # pytubefix 실패 시 yt-dlp 사용
-    try:
-        command = [
-            'yt-dlp',
-            '--write-auto-sub',
-            '--sub-lang', 'ko,en',
-            '--sleep-subtitles', '5',
-            '--skip-download',
-            '--sub-format', 'vtt',
-            '-o', '-', # 표준 출력으로 내보내기
-            f'https://www.youtube.com/watch?v={video_id}'
-        ]
-        result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8', check=True)
-        vtt_content = result.stdout
-        
-        lines = vtt_content.strip().split('\n')
-        text_parts = [line for line in lines if not line.startswith(('WEBVTT', 'Kind:', 'Language:')) and '-->' not in line and line.strip()]
-        text_only = " ".join(text_parts)
-        return text_only, len(text_only.split())
+    # 3. pytubefix 실패 시 또는 스크립트를 찾지 못한 경우 yt-dlp 사용
+    if not text_only:
+        try:
+            command = [
+                'yt-dlp',
+                '--write-auto-sub',
+                '--sub-lang', 'ko,en',
+                '--sleep-subtitles', '5',
+                '--skip-download',
+                '--sub-format', 'vtt',
+                '-o', '-', # 표준 출력으로 내보내기
+                f'https://www.youtube.com/watch?v={video_id}'
+            ]
+            result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8', check=True)
+            vtt_content = result.stdout
+            
+            lines = vtt_content.strip().split('\n')
+            text_parts = [line for line in lines if not line.startswith(('WEBVTT', 'Kind:', 'Language:')) and '-->' not in line and line.strip()]
+            text_only = " ".join(text_parts)
+            word_count = len(text_only.split())
 
-    except subprocess.CalledProcessError as e:
-        print(f"yt-dlp 실행 중 오류 발생 (ID: {video_id}): {e.stderr}")
-        return None, 0
-    except Exception as e:
-        print(f"yt-dlp로 자막을 가져오는 중 알 수 없는 오류 발생 (ID: {video_id}): {e}")
-        return None, 0
+        except subprocess.CalledProcessError as e:
+            print(f"yt-dlp 실행 중 오류 발생 (ID: {video_id}): {e.stderr}")
+            return None, 0
+        except Exception as e:
+            print(f"yt-dlp로 자막을 가져오는 중 알 수 없는 오류 발생 (ID: {video_id}): {e}")
+            return None, 0
+
+    # 4. 성공적으로 추출한 경우 캐시에 저장
+    if text_only:
+        save_transcript_to_cache(video_id, text_only, word_count)
+
+    return text_only, word_count
