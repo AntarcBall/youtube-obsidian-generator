@@ -1,14 +1,16 @@
 {
     "$schema": "./config_schema.json",
-    "font_size": 13,
+    "font_size": 11,
     "theme": "dark",
     "gemini_model": "gemini-1.5-flash",
     "obsidian_path": "C:/Users/bounc/OneDrive/문서/GNifiedNotes",
-    "gemini_batch_size": 50,
+    "gemini_batch_size": 20,
     "youtube_url": "https://www.youtube.com/@isaacarthurSFIA",
-    "min_video_duration": 0,
+    "min_video_duration": 120,
     "run_ip_test": false,
     "list_load_batch_size": 100,
     "include_shorts": false,
-    "keep_original_title": true
+    "keep_original_title": true,
+    "auto_quit_on_completion": false,
+    "insert_dash_in_titles": true
 }

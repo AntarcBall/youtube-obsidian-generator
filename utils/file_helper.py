@@ -25,7 +25,7 @@ def load_api_key(key_name="myapi", filepath="MYAPI.json"):
         print(f"경고: API 키 파일 로딩 실패 - {e}.")
         return None
 
-def _sanitize_filename(title):
+def _sanitize_filename(title, insert_dash):
     """
     주어진 문자열을 파일 이름으로 사용할 수 있도록 정리합니다.
     """
@@ -34,24 +34,27 @@ def _sanitize_filename(title):
     # 파일명으로 사용할 수 없는 문자 제거
     sanitized_title = re.sub(r'[\\/*?:"<>|]', "", sanitized_title)
     # 공백 및 연속된 하이픈을 단일 하이픈으로 변경
-    filename = re.sub(r'\s+', '-', sanitized_title)
-    filename = re.sub(r'-+', '-', filename).strip('-')
+    if insert_dash:
+        filename = re.sub(r'\s+', '-', sanitized_title)
+        filename = re.sub(r'-+', '-', filename).strip('-')
+    else:
+        filename = re.sub(r'\s+', '', sanitized_title) # Remove spaces
     # 너무 길 경우 자르기 (예: 200자)
     filename = (filename[:200]) if len(filename) > 200 else filename
     return filename
 
-def generate_filename_from_content(content):
+def generate_filename_from_content(content, insert_dash):
     """
-    내용의 첫 줄을 기반으로 'a-b-c' 형태의 파일명을 생성합니다.
+    내용의 첫 줄을 기반으로 파일명을 생성합니다.
     """
     if not content:
         return "untitled"
         
     # 내용의 첫 줄을 제목으로 가정
     first_line = content.strip().split('\n')[0]
-    return _sanitize_filename(first_line)
+    return _sanitize_filename(first_line, insert_dash)
 
-def save_as_obsidian_note(path, content, keep_original_title=False, original_title=""):
+def save_as_obsidian_note(path, content, keep_original_title=False, original_title="", insert_dash=True):
     """
     지정된 경로에 가공된 내용을 마크다운 파일로 저장합니다.
     파일 이름은 내용 또는 원본 제목에서 생성됩니다.
@@ -62,10 +65,10 @@ def save_as_obsidian_note(path, content, keep_original_title=False, original_tit
 
     base_filename = ""
     if keep_original_title and original_title:
-        base_filename = _sanitize_filename(original_title)
+        base_filename = _sanitize_filename(original_title, insert_dash)
     
     if not base_filename:
-        base_filename = generate_filename_from_content(content)
+        base_filename = generate_filename_from_content(content, insert_dash)
 
     if not base_filename:
         base_filename = "untitled"

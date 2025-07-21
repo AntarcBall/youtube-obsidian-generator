@@ -27,10 +27,11 @@ def load_config(filepath="config.json"):
         "youtube_url": "https://www.youtube.com/@slow_doctor",
         "min_video_duration": 120, # Default to 2 minutes (120 seconds)
         "run_ip_test": True, # Default to True
-        "gemini_model": "gemini-2.5-flash", # Default Gemini model
+        "gemini_model": "gemini-1.5-flash", # Default Gemini model
         "list_load_batch_size": 50, # Default to 50
         "include_shorts": False, # Default to False
-        "keep_original_title": False # Default to False
+        "keep_original_title": False, # Default to False
+        "auto_quit_on_completion": False # Default to False
     }
 
     if not os.path.exists(config_path):
@@ -39,19 +40,11 @@ def load_config(filepath="config.json"):
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
-            return {
-                "font_size": config.get("font_size", defaults["font_size"]),
-                "theme": config.get("theme", defaults["theme"]),
-                "obsidian_path": config.get("obsidian_path", defaults["obsidian_path"]),
-                "gemini_batch_size": config.get("gemini_batch_size", defaults["gemini_batch_size"]),
-                "youtube_url": config.get("youtube_url", defaults["youtube_url"]),
-                "min_video_duration": config.get("min_video_duration", defaults["min_video_duration"]),
-                "run_ip_test": config.get("run_ip_test", defaults["run_ip_test"]),
-                "gemini_model": config.get("gemini_model", defaults["gemini_model"]),
-                "list_load_batch_size": config.get("list_load_batch_size", defaults["list_load_batch_size"]),
-                "include_shorts": config.get("include_shorts", defaults["include_shorts"]),
-                "keep_original_title": config.get("keep_original_title", defaults["keep_original_title"])
-            }
+            # 모든 키에 대해 get을 사용하여 기본값 처리
+            for key, value in defaults.items():
+                if key not in config:
+                    config[key] = value
+            return config
     except (json.JSONDecodeError, IOError):
         return defaults
 
@@ -80,7 +73,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("YouTube 스크립트 분석기")
-        self.geometry("1324x768")
+        self.geometry("924x568")
 
         # --- UI 상태 변수 ---
         self.font_size = CONFIG['font_size']
@@ -88,6 +81,8 @@ class App(tk.Tk):
         self.include_shorts = tk.BooleanVar(value=CONFIG.get('include_shorts', False))
         self.min_duration_seconds = tk.IntVar(value=CONFIG.get('min_video_duration', 120))
         self.keep_original_title = tk.BooleanVar(value=CONFIG.get('keep_original_title', False))
+        self.auto_quit_on_completion = tk.BooleanVar(value=CONFIG.get('auto_quit_on_completion', False))
+        self.insert_dash_in_titles = tk.BooleanVar(value=CONFIG.get('insert_dash_in_titles', True))
         self.gemini_model_var = tk.StringVar(value=CONFIG.get('gemini_model', 'gemini-2.5-flash'))
         
         # --- 스타일 설정 ---
@@ -158,13 +153,26 @@ class App(tk.Tk):
         scene1.pack(fill="both", expand=True)
 
         control_frame = ttk.Frame(scene1)
-        control_frame.pack(fill='x', pady=(0, 20))
+        control_frame.pack(fill='x', pady=(0, 10), anchor='n')
 
-        ttk.Button(control_frame, text="글씨 작게", command=lambda: self.change_font_size(-1)).pack(side="left", padx=5)
-        ttk.Button(control_frame, text="글씨 크게", command=lambda: self.change_font_size(1)).pack(side="left", padx=5)
-        ttk.Checkbutton(control_frame, text="다크 모드", variable=self.is_dark_mode, command=self.update_styles).pack(side="left", padx=10)
-        ttk.Checkbutton(control_frame, text="Shorts 영상 포함", variable=self.include_shorts).pack(side="left", padx=10)
-        ttk.Checkbutton(control_frame, text="제목 원본 유지", variable=self.keep_original_title).pack(side="left", padx=10)
+        # 첫 번째 줄 체크박스
+        row1_frame = ttk.Frame(control_frame)
+        row1_frame.pack(fill='x')
+        ttk.Checkbutton(row1_frame, text="다크 모드", variable=self.is_dark_mode, command=self.update_styles).pack(side="left", padx=10)
+        ttk.Checkbutton(row1_frame, text="Shorts 영상 포함", variable=self.include_shorts).pack(side="left", padx=10)
+        ttk.Checkbutton(row1_frame, text="제목 원본 유지", variable=self.keep_original_title).pack(side="left", padx=10)
+
+        # 두 번째 줄 체크박스
+        row2_frame = ttk.Frame(control_frame)
+        row2_frame.pack(fill='x', pady=(5, 0))
+        ttk.Checkbutton(row2_frame, text="완료 시 자동 종료", variable=self.auto_quit_on_completion).pack(side="left", padx=10)
+        ttk.Checkbutton(row2_frame, text="제목에 대시 삽입", variable=self.insert_dash_in_titles).pack(side="left", padx=10)
+
+        # 폰트 크기 조절 버튼
+        font_button_frame = ttk.Frame(control_frame)
+        font_button_frame.pack(side="left", padx=20)
+        ttk.Button(font_button_frame, text="글씨 작게", command=lambda: self.change_font_size(-1)).pack(side="left", padx=5)
+        ttk.Button(font_button_frame, text="글씨 크게", command=lambda: self.change_font_size(1)).pack(side="left", padx=5)
 
         # Gemini 모델 선택 라디오 버튼
         model_frame = ttk.Frame(control_frame)
@@ -434,7 +442,7 @@ class App(tk.Tk):
                         continue # 오류가 있으면 노트 저장을 건너뜀
 
                     self.q.put(("log", f"  - '{video_title}' 내용 가공 완료. 노트 저장 중..."))
-                    file_helper.save_as_obsidian_note(self.obsidian_path, processed_content, self.keep_original_title.get(), video_title)
+                    file_helper.save_as_obsidian_note(self.obsidian_path, processed_content, self.keep_original_title.get(), video_title, self.insert_dash_in_titles.get())
                     
                     # 성공적으로 저장된 비디오를 로그에 기록
                     youtube_helper.log_processed_video(video_id)

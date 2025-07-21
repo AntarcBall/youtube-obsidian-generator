@@ -49,6 +49,14 @@
     "keep_original_title": {
       "type": "boolean",
       "description": "Whether to keep the original video title."
+    },
+    "auto_quit_on_completion": {
+      "type": "boolean",
+      "description": "Whether to automatically quit the application after successful completion."
+    },
+    "insert_dash_in_titles": {
+      "type": "boolean",
+      "description": "Whether to insert a dash in the titles of the generated files."
     }
   },
   "required": [
@@ -62,6 +70,8 @@
     "run_ip_test",
     "list_load_batch_size",
     "include_shorts",
-    "keep_original_title"
+    "keep_original_title",
+    "auto_quit_on_completion",
+    "insert_dash_in_titles"
   ]
 }
