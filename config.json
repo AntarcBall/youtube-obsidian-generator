@@ -2,7 +2,7 @@
     "$schema": "./config_schema.json",
     "font_size": 11,
     "theme": "dark",
-    "gemini_model": "gemini-1.5-flash",
+    "gemini_model": "gemini-2.5-flash",
     "obsidian_path": "C:/Users/bounc/OneDrive/문서/GNifiedNotes",
     "gemini_batch_size": 20,
     "youtube_url": "https://www.youtube.com/@isaacarthurSFIA",
@@ -12,5 +12,5 @@
     "include_shorts": false,
     "keep_original_title": true,
     "auto_quit_on_completion": false,
-    "insert_dash_in_titles": true
+    "insert_dash_in_titles": false
 }
