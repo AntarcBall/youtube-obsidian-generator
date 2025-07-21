@@ -233,26 +233,46 @@ class App(tk.Tk):
 
     def fetch_videos_thread(self):
         try:
-            # 1. 채널의 모든 영상 목록을 가져옵니다 (캐시 또는 API)
-            all_videos_raw = youtube_helper.get_videos_from_channel(self.channel_url)
-            
-            # 2. 필터링 및 'is_processed' 플래그 추가
+            self.channel_id = youtube_helper.get_channel_id_from_url(self.channel_url)
+            if not self.channel_id:
+                raise ValueError("유효한 채널 ID를 찾을 수 없습니다.")
+
+            video_cache = youtube_helper.load_video_list_cache()
+            cached_data = video_cache.get(self.channel_id)
+
+            # 캐시 데이터 형식 확인 (오래된 캐시 형식일 경우 무효화)
+            if cached_data and not isinstance(cached_data, dict):
+                print("오래된 형식의 캐시를 발견하여 무효화합니다. 새로 목록을 불러옵니다.")
+                cached_data = None # 캐시를 무효화하여 새로 불러오도록 함
+
+            if cached_data:
+                print(f"'{self.channel_id}' 채널의 영상 목록을 캐시에서 불러옵니다.")
+                self.all_videos = cached_data.get("videos", [])
+                self.next_page_token = cached_data.get("nextPageToken")
+            else:
+                print("캐시된 영상 목록이 없습니다. API에서 새로 가져옵니다.")
+                videos_batch, self.next_page_token = youtube_helper.get_videos_from_channel(
+                    self.channel_url, 
+                    max_results=CONFIG.get("list_load_batch_size", 100)
+                )
+                self.all_videos = videos_batch
+                youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
+
+            # 필터링 및 'is_processed' 플래그 적용
             processed_log = youtube_helper.load_processed_videos_log()
             filtered_videos = []
-            for video in all_videos_raw:
-                # 쇼츠 영상 필터링
+            for video in self.all_videos:
                 if not self.include_shorts.get() and video['title'].strip().endswith('#비밀치트키'):
                     continue
-                # 최소 길이 필터링
                 if video.get('total_seconds', 0) < self.min_video_duration:
                     continue
                 
-                # 이미 처리된 비디오인지 확인
                 video['is_processed'] = video['id'] in processed_log
                 filtered_videos.append(video)
-
+            
             self.all_videos = filtered_videos
-            self.q.put(("videos_fetched", filtered_videos))
+            self.q.put(("videos_fetched", self.all_videos))
+
         except Exception as e:
             self.q.put(("error", f"영상 목록 로딩 실패: {e}"))
 
@@ -275,8 +295,7 @@ class App(tk.Tk):
         self.tree.column("제목", width=600)
         self.tree.column("영상 길이", width=100, anchor='center')
         
-        # 처리된 항목을 위한 태그 스타일 설정
-        processed_color = "#5DADE2" # 밝은 파란색
+        processed_color = "#5DADE2"
         self.tree.tag_configure('processed', foreground=processed_color)
         
         self.tree.pack(fill="both", expand=True, pady=10)
@@ -297,7 +316,13 @@ class App(tk.Tk):
         button_frame.pack(fill='x', pady=10)
 
         self.confirm_btn2 = ttk.Button(button_frame, text="선택한 영상 분석 시작", command=self.start_processing)
-        self.confirm_btn2.pack(expand=True, fill="x", ipady=5)
+        self.confirm_btn2.pack(side="left", expand=True, fill="x", ipady=5, padx=(0, 5))
+
+        self.load_more_btn = ttk.Button(button_frame, text="추가 로드", command=self.load_more_videos)
+        self.load_more_btn.pack(side="right", expand=True, fill="x", ipady=5, padx=(5, 0))
+        
+        if not self.next_page_token:
+            self.load_more_btn.config(state="disabled")
             
         return scene2
 
@@ -305,6 +330,37 @@ class App(tk.Tk):
         """Treeview 선택 변경 시 호출되어 선택된 항목 수를 업데이트합니다."""
         selected_items = self.tree.selection()
         self.selection_count_label.config(text=f"선택된 항목: {len(selected_items)}개")
+
+    def load_more_videos(self):
+        self.load_more_btn.config(state="disabled", text="로딩 중...")
+        threading.Thread(target=self._load_more_videos_thread, daemon=True).start()
+
+    def _load_more_videos_thread(self):
+        try:
+            videos_batch, self.next_page_token = youtube_helper.get_videos_from_channel(
+                self.channel_url,
+                max_results=CONFIG.get("list_load_batch_size", 100),
+                page_token=self.next_page_token
+            )
+            
+            # 필터링 및 플래그 추가
+            processed_log = youtube_helper.load_processed_videos_log()
+            filtered_batch = []
+            for video in videos_batch:
+                if not self.include_shorts.get() and video['title'].strip().endswith('#비밀치트키'):
+                    continue
+                if video.get('total_seconds', 0) < self.min_video_duration:
+                    continue
+                video['is_processed'] = video['id'] in processed_log
+                filtered_batch.append(video)
+
+            # 전체 비디오 목록 및 캐시 업데이트
+            self.all_videos.extend(filtered_batch)
+            youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
+            
+            self.q.put(("add_videos_to_tree", filtered_batch))
+        except Exception as e:
+            self.q.put(("error", f"추가 영상 로딩 실패: {e}"))
 
     def start_processing(self):
         selected_ids = self.tree.selection()
@@ -414,10 +470,20 @@ class App(tk.Tk):
             msg_type, data = self.q.get_nowait()
             if msg_type == "videos_fetched":
                 self.switch_scene(self.create_scene2, data)
+            elif msg_type == "add_videos_to_tree":
+                for video in data:
+                    tags = ('processed',) if video.get('is_processed') else ()
+                    self.tree.insert("", "end", values=(video['title'], video['duration']), iid=video['id'], tags=tags)
+                if self.next_page_token:
+                    self.load_more_btn.config(state="normal", text="추가 로드")
+                else:
+                    self.load_more_btn.config(state="disabled", text="더 이상 영상 없음")
             elif msg_type == "error":
                 messagebox.showerror("오류", data)
                 if hasattr(self, 'confirm_btn1'):
                     self.confirm_btn1.config(state="normal", text="영상 목록 불러오기")
+                if hasattr(self, 'load_more_btn'):
+                    self.load_more_btn.config(state="normal", text="추가 로드")
             elif msg_type == "log":
                 self.log_message(data)
             elif msg_type == "progress":

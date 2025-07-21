@@ -54,10 +54,13 @@ def load_video_list_cache():
     except (json.JSONDecodeError, IOError):
         return {}
 
-def save_video_list_to_cache(channel_id, videos):
-    """채널의 비디오 목록을 JSON 캐시에 저장합니다."""
+def save_video_list_to_cache(channel_id, videos, next_page_token):
+    """채널의 비디오 목록과 다음 페이지 토큰을 JSON 캐시에 저장합니다."""
     cache = load_video_list_cache()
-    cache[channel_id] = videos
+    cache[channel_id] = {
+        "videos": videos,
+        "nextPageToken": next_page_token
+    }
     try:
         with open(VIDEO_LIST_CACHE_PATH, 'w', encoding='utf-8') as f:
             json.dump(cache, f, ensure_ascii=False, indent=4)
@@ -115,23 +118,15 @@ def get_channel_id_from_url(url):
                 return None # 검색 실패 시 None 반환
     return None
 
-def get_videos_from_channel(channel_url):
+def get_videos_from_channel(channel_url, max_results=50, page_token=None):
     """
-    채널의 모든 영상 목록을 가져옵니다.
-    먼저 캐시를 확인하고, 없으면 YouTube API를 통해 가져온 후 캐시에 저장합니다.
+    채널의 영상 목록을 지정된 개수만큼 가져와 반환합니다.
+    page_token을 사용하여 다음 페이지를 가져올 수 있습니다.
     """
     channel_id = get_channel_id_from_url(channel_url)
     if not channel_id:
         raise ValueError("유효한 채널 URL이 아니거나 채널 ID를 찾을 수 없습니다.")
 
-    # 1. 캐시 확인
-    video_cache = load_video_list_cache()
-    if channel_id in video_cache:
-        print(f"'{channel_id}' 채널의 영상 목록을 캐시에서 불러옵니다.")
-        return video_cache[channel_id]
-
-    # 2. 캐시에 없는 경우 API를 통해 가져오기
-    print(f"'{channel_id}' 채널의 전체 영상 목록을 API로부터 가져옵니다. 잠시만 기다려주세요...")
     try:
         res = youtube.channels().list(id=channel_id, part='contentDetails').execute()
         if not res.get('items'):
@@ -141,65 +136,56 @@ def get_videos_from_channel(channel_url):
     except Exception as e:
         raise ValueError(f"채널의 업로드 목록을 가져오는 중 오류 발생: {e}")
 
-    all_video_ids = []
-    all_video_titles = {}
-    next_page_token = None
-
-    # 모든 페이지를 순회하며 영상 ID와 제목 수집
-    while True:
-        res = youtube.playlistItems().list(
-            playlistId=playlist_id,
-            part='snippet',
-            maxResults=50,
-            pageToken=next_page_token
-        ).execute()
-        
-        for item in res.get('items', []):
-            snippet = item.get('snippet', {})
-            video_id = snippet.get('resourceId', {}).get('videoId')
-            if video_id:
-                title = snippet.get('title', "제목 없음")
-                all_video_ids.append(video_id)
-                all_video_titles[video_id] = title
-        
-        next_page_token = res.get('nextPageToken')
-        if not next_page_token:
-            break
+    video_ids = []
+    video_titles = {}
     
-    all_videos = []
-    # 모든 영상의 길이를 50개씩 묶어 요청
-    for i in range(0, len(all_video_ids), 50): 
-        chunk_ids = all_video_ids[i:i+50]
-        try:
-            video_details_res = youtube.videos().list(
-                id=','.join(chunk_ids),
-                part='contentDetails'
-            ).execute()
-
-            for item in video_details_res.get('items', []):
-                video_id = item['id']
-                duration_iso = item.get('contentDetails', {}).get('duration', 'PT0S')
-                duration_parsed = parse_duration(duration_iso)
-                total_seconds = int(duration_parsed.total_seconds())
-                duration_formatted = parse_iso8601_duration(duration_iso)
-                
-                all_videos.append({
-                    'id': video_id,
-                    'title': all_video_titles.get(video_id, "제목 없음"),
-                    'duration': duration_formatted,
-                    'total_seconds': total_seconds
-                })
-        except Exception as e:
-            print(f"영상 길이 정보를 가져오는 중 오류 발생 (ID: {chunk_ids}): {e}")
-
-    # API에서 가져온 순서대로 정렬
-    videos_dict = {v['id']: v for v in all_videos}
-    sorted_videos = [videos_dict[vid_id] for vid_id in all_video_ids if vid_id in videos_dict]
-
-    # 3. 캐시에 저장
-    save_video_list_to_cache(channel_id, sorted_videos)
+    res = youtube.playlistItems().list(
+        playlistId=playlist_id,
+        part='snippet',
+        maxResults=max_results,
+        pageToken=page_token
+    ).execute()
     
-    return sorted_videos
+    for item in res.get('items', []):
+        snippet = item.get('snippet', {})
+        video_id = snippet.get('resourceId', {}).get('videoId')
+        if video_id:
+            title = snippet.get('title', "제목 없음")
+            video_ids.append(video_id)
+            video_titles[video_id] = title
+
+    next_page_token = res.get('nextPageToken')
+    
+    videos = []
+    if video_ids:
+        for i in range(0, len(video_ids), 50): 
+            chunk_ids = video_ids[i:i+50]
+            try:
+                video_details_res = youtube.videos().list(
+                    id=','.join(chunk_ids),
+                    part='contentDetails'
+                ).execute()
+
+                for item in video_details_res.get('items', []):
+                    video_id = item['id']
+                    duration_iso = item.get('contentDetails', {}).get('duration', 'PT0S')
+                    duration_parsed = parse_duration(duration_iso)
+                    total_seconds = int(duration_parsed.total_seconds())
+                    duration_formatted = parse_iso8601_duration(duration_iso)
+                    
+                    videos.append({
+                        'id': video_id,
+                        'title': video_titles.get(video_id, "제목 없음"),
+                        'duration': duration_formatted,
+                        'total_seconds': total_seconds
+                    })
+            except Exception as e:
+                print(f"영상 길이 정보를 가져오는 중 오류 발생 (ID: {chunk_ids}): {e}")
+
+    videos_dict = {v['id']: v for v in videos}
+    sorted_videos = [videos_dict[vid_id] for vid_id in video_ids if vid_id in videos_dict]
+
+    return sorted_videos, next_page_token
 
 def get_transcript(video_id, proxy_url=None):
     """
