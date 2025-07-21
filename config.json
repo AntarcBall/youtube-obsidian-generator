@@ -4,7 +4,7 @@
     "theme": "dark",
     "gemini_model": "gemini-2.5-flash",
     "obsidian_path": "C:/Users/bounc/OneDrive/문서/GNifiedNotes",
-    "gemini_batch_size": 20,
+    "gemini_batch_size": 2,
     "youtube_url": "https://www.youtube.com/@isaacarthurSFIA",
     "min_video_duration": 120,
     "run_ip_test": false,

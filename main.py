@@ -400,60 +400,62 @@ class App(tk.Tk):
 
         self.q.put(("log", f"--- 총 {total}개 영상 배치 처리 시작 ---"))
         
-        tasks = []
-        for i, video in enumerate(self.selected_videos):
-            video_id = video['id']
-            video_title = video['title']
-            self.q.put(("log", f"  - [{i+1}/{total}] '{video_title}' 스크립트 준비 중..."))
+        # 배치 처리를 위한 루프
+        for i in range(0, total, batch_size):
+            batch_videos = self.selected_videos[i:i + batch_size]
+            tasks = []
+            for j, video in enumerate(batch_videos):
+                video_id = video['id']
+                video_title = video['title']
+                self.q.put(("log", f"  - [{i+j+1}/{total}] '{video_title}' 스크립트 준비 중..."))
+                try:
+                    transcript, _ = youtube_helper.get_transcript(video_id)
+                    if not transcript:
+                        self.q.put(("log", f"  - 경고: '{video_title}' 스크립트를 찾을 수 없어 건너뜁니다."))
+                        continue
+                    
+                    prompt_with_title = f"영상 제목: {video_title}\n\n{self.user_prompt}"
+                    full_prompt = f"{prompt_with_title}\n\n--- 원본 스크립트 ---\n{transcript}\n--- 원본 스크립트 끝 ---"
+                    tasks.append({"id": video_id, "task": full_prompt, "original_title": video_title}) # original_title 추가
+
+                except Exception as e:
+                    self.q.put(("log", f"  - ✗ 오류: '{video_title}' 스크립트 추출 중 문제 발생 - {e}"))
+
+            if not tasks:
+                self.q.put(("log", "--- 현재 배치에 처리할 작업이 없습니다. ---"))
+                continue
+
             try:
-                transcript, _ = youtube_helper.get_transcript(video_id)
-                if not transcript:
-                    self.q.put(("log", f"  - 경고: '{video_title}' 스크립트를 찾을 수 없어 건너뜁니다."))
-                    continue
+                self.q.put(("log", f"  - Gemini API로 {len(tasks)}개 작업 배치 요청 중 (배치 {i//batch_size + 1})..."))
+                results = gemini_helper.process_batch_with_gemini(tasks, self.gemini_model_var.get())
                 
-                prompt_with_title = f"영상 제목: {video_title}\n\n{self.user_prompt}"
-                full_prompt = f"{prompt_with_title}\n\n--- 원본 스크립트 ---\n{transcript}\n--- 원본 스크립트 끝 ---"
-                tasks.append({"id": video_id, "task": full_prompt, "original_title": video_title}) # original_title 추가
+                result_map = {res['id']: res.get('result', f"No result found for ID {res.get('id')}") for res in results}
+
+                for task in tasks:
+                    video_id = task['id']
+                    video_title = task['original_title'] # original_title 사용
+                    
+                    if video_id in result_map:
+                        processed_content = result_map[video_id]
+                        
+                        # 결과에 오류 메시지가 포함되어 있는지 확인
+                        if "Error processing batch response" in processed_content:
+                            self.q.put(("log", f"  - ✗ 오류: '{video_title}' 처리 중 API 오류 발생 - {processed_content}"))
+                            continue # 오류가 있으면 노트 저장을 건너뜀
+
+                        self.q.put(("log", f"  - '{video_title}' 내용 가공 완료. 노트 저장 중..."))
+                        file_helper.save_as_obsidian_note(self.obsidian_path, processed_content, self.keep_original_title.get(), video_title, self.insert_dash_in_titles.get())
+                        
+                        # 성공적으로 저장된 비디오를 로그에 기록
+                        youtube_helper.log_processed_video(video_id)
+                        
+                        self.q.put(("log", f"  - ✓ 완료: '{video_title}' 노트 생성 완료"))
+                    else:
+                        self.q.put(("log", f"  - ✗ 오류: '{video_title}' 처리 결과가 없습니다."))
 
             except Exception as e:
-                self.q.put(("log", f"  - ✗ 오류: '{video_title}' 스크립트 추출 중 문제 발생 - {e}"))
-
-        if not tasks:
-            self.q.put(("log", "--- 처리할 작업이 없습니다. ---"))
-            self.q.put(("done", "모든 작업이 완료되었습니다!"))
-            return
-
-        try:
-            self.q.put(("log", f"  - Gemini API로 {len(tasks)}개 작업 배치 요청..."))
-            results = gemini_helper.process_batch_with_gemini(tasks, self.gemini_model_var.get())
+                self.q.put(("log", f"  - ✗ 오류: Gemini 배치 처리 중 문제 발생 - {e}"))
             
-            result_map = {res['id']: res.get('result', f"No result found for ID {res.get('id')}") for res in results}
-
-            for task in tasks:
-                video_id = task['id']
-                video_title = task['original_title'] # original_title 사용
-                
-                if video_id in result_map:
-                    processed_content = result_map[video_id]
-                    
-                    # 결과에 오류 메시지가 포함되어 있는지 확인
-                    if "Error processing batch response" in processed_content:
-                        self.q.put(("log", f"  - ✗ 오류: '{video_title}' 처리 중 API 오류 발생 - {processed_content}"))
-                        continue # 오류가 있으면 노트 저장을 건너뜀
-
-                    self.q.put(("log", f"  - '{video_title}' 내용 가공 완료. 노트 저장 중..."))
-                    file_helper.save_as_obsidian_note(self.obsidian_path, processed_content, self.keep_original_title.get(), video_title, self.insert_dash_in_titles.get())
-                    
-                    # 성공적으로 저장된 비디오를 로그에 기록
-                    youtube_helper.log_processed_video(video_id)
-                    
-                    self.q.put(("log", f"  - ✓ 완료: '{video_title}' 노트 생성 완료"))
-                else:
-                    self.q.put(("log", f"  - ✗ 오류: '{video_title}' 처리 결과가 없습니다."))
-
-        except Exception as e:
-            self.q.put(("log", f"  - ✗ 오류: Gemini 배치 처리 중 문제 발생 - {e}"))
-        
         self.q.put(("done", "모든 작업이 완료되었습니다!"))
 
     def log_message(self, message):
