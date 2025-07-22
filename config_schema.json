@@ -10,14 +10,14 @@
     },
     "theme": {
       "type": "string",
-      "enum": ["dark", "light", "gemini-2.0-flash"],
+      "enum": ["dark", "light"],
       "description": "Application theme."
     },
     "gemini_model": {
       "type": "string",
       "description": "Gemini model to use.",
-      "enum": ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.5-flash"]
-    },,
+      "enum": ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-lite"]
+    },
     "obsidian_path": {
       "type": "string",
       "description": "Path to Obsidian notes."
@@ -34,6 +34,10 @@
     "min_video_duration": {
       "type": "integer",
       "description": "Minimum video duration in seconds."
+    },
+    "max_video_duration": {
+      "type": "integer",
+      "description": "Maximum video duration in seconds."
     },
     "run_ip_test": {
       "type": "boolean",

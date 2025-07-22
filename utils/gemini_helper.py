@@ -17,9 +17,9 @@ def load_gemini_model_from_config():
         config_path = os.path.join(script_dir, '..', 'config.json')
         with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
-            return config.get("gemini_model", "gemini-2.0-flash")
+            return config.get("gemini_model", "gemini-2.0-flash-lite")
     except (FileNotFoundError, json.JSONDecodeError):
-        return "gemini-2.0-flash" # 파일이 없거나 오류 발생 시 기본값
+        return "gemini-2.0-flash-lite" # 파일이 없거나 오류 발생 시 기본값
 
 def check_gemini_api():
     """

@@ -4360,20 +4360,6 @@
     "UCZFipeZtQM5CKUjx6grh54g": {
         "videos": [
             {
-                "id": "lnm802_hkGI",
-                "title": "Before the Big Bang - What Came Before Time?",
-                "duration": "28:03",
-                "total_seconds": 1683,
-                "is_processed": true
-            },
-            {
-                "id": "uh-vs8dhC3M",
-                "title": "The Ethics of Transhumanism - Dreaming of More, Without Losing What We Are",
-                "duration": "40:41",
-                "total_seconds": 2441,
-                "is_processed": true
-            },
-            {
                 "id": "bqAAutE-0YU",
                 "title": "Could we upload your mind? And would it be you?",
                 "duration": "02:18",
@@ -4381,66 +4367,10 @@
                 "is_processed": true
             },
             {
-                "id": "VgMfuSxn-es",
-                "title": "How Alien Would Aliens Behave?",
-                "duration": "30:07",
-                "total_seconds": 1807,
-                "is_processed": true
-            },
-            {
-                "id": "XCE5YXBFAAE",
-                "title": "Spaceports Innovations - Designing the Next Generation of Launch Sites",
-                "duration": "29:53",
-                "total_seconds": 1793,
-                "is_processed": true
-            },
-            {
-                "id": "NDCCNwOVAm4",
-                "title": "What If the Big Bang Never Happened?",
-                "duration": "26:58",
-                "total_seconds": 1618,
-                "is_processed": true
-            },
-            {
-                "id": "0X4GAkzrqt0",
-                "title": "The Economics of a Post Scarcity Universe - What Happens When Everything Is Free?",
-                "duration": "35:30",
-                "total_seconds": 2130,
-                "is_processed": false
-            },
-            {
                 "id": "TxJR9Im55tw",
                 "title": "The 10 Worst Alien Invasion Strategies",
                 "duration": "17:14",
                 "total_seconds": 1034,
-                "is_processed": false
-            },
-            {
-                "id": "w2hDRnXGUdI",
-                "title": "ISRU: In-Situ Resource Utilization - From Regolith to Rocket Fuel",
-                "duration": "31:39",
-                "total_seconds": 1899,
-                "is_processed": false
-            },
-            {
-                "id": "ac9BTSNL7fA",
-                "title": "Cosmic Megafauna - Could Giant Alien Life Forms Exist?",
-                "duration": "41:04",
-                "total_seconds": 2464,
-                "is_processed": false
-            },
-            {
-                "id": "l8keIfbYcdE",
-                "title": "How Colonizing Space Benefits Earth - The Ground Level Gains of a Galactic Future",
-                "duration": "23:17",
-                "total_seconds": 1397,
-                "is_processed": true
-            },
-            {
-                "id": "WStjr5daYsY",
-                "title": "Space Elevator Economics: Building And Operating A Superhighway To Space",
-                "duration": "38:49",
-                "total_seconds": 2329,
                 "is_processed": true
             },
             {
@@ -4448,14 +4378,7 @@
                 "title": "How Hard Would It Be to Terraform Venus?",
                 "duration": "18:28",
                 "total_seconds": 1108,
-                "is_processed": false
-            },
-            {
-                "id": "PRzfQofJZRk",
-                "title": "The Terraforming Compendium - From Barren Rocks to Living Worlds",
-                "duration": "02:18:06",
-                "total_seconds": 8286,
-                "is_processed": false
+                "is_processed": true
             },
             {
                 "id": "WC18W90LY2A",
@@ -4465,396 +4388,11 @@
                 "is_processed": true
             },
             {
-                "id": "266YIYcM8cM",
-                "title": "Interstellar Travel - Can We Survive The Long Journey?",
-                "duration": "34:10",
-                "total_seconds": 2050,
-                "is_processed": false
-            },
-            {
                 "id": "1RcNNC4sI60",
                 "title": "Could We See a Second Big Bang?",
                 "duration": "15:47",
                 "total_seconds": 947,
-                "is_processed": false
-            },
-            {
-                "id": "Z2sdc511VtU",
-                "title": "How Many Alien Civilizations Are There?",
-                "duration": "32:37",
-                "total_seconds": 1957,
-                "is_processed": false
-            },
-            {
-                "id": "C5PD_IS4bz8",
-                "title": "Orbital Shipyards - Building Fleets in Space",
-                "duration": "52:58",
-                "total_seconds": 3178,
-                "is_processed": false
-            },
-            {
-                "id": "vAFImV0iseM",
-                "title": "5 Fermi Paradox Explanations I Love, 7 That Fall Flat",
-                "duration": "27:15",
-                "total_seconds": 1635,
-                "is_processed": false
-            },
-            {
-                "id": "DgUhwAGtWqE",
-                "title": "Stormtroopers: Elite Warriors and the Evolution of Future Combat",
-                "duration": "43:37",
-                "total_seconds": 2617,
-                "is_processed": false
-            },
-            {
-                "id": "Y9gzegIF5q0",
-                "title": "Ancient Machine Monitors: Alien Watchdogs, AI Custodians, and the Fermi Paradox",
-                "duration": "26:15",
-                "total_seconds": 1575,
-                "is_processed": false
-            },
-            {
-                "id": "rHy61QOeY_8",
-                "title": "Life in 2525 AD (Episode 500)",
-                "duration": "45:32",
-                "total_seconds": 2732,
-                "is_processed": false
-            },
-            {
-                "id": "9ynV-forjQo",
-                "title": "Worldhouses & Paraterraforming: Building Planets, One Dome at a Time",
-                "duration": "33:00",
-                "total_seconds": 1980,
-                "is_processed": false
-            },
-            {
-                "id": "KEkLLCirTv8",
-                "title": "Post-Biological Civilizations: Life Beyond Flesh and Bone",
-                "duration": "34:42",
-                "total_seconds": 2082,
-                "is_processed": false
-            },
-            {
-                "id": "mLkWSLKa-pM",
-                "title": "Cities of the Future – Megacities, Arcologies, and Floating Utopias",
-                "duration": "38:07",
-                "total_seconds": 2287,
-                "is_processed": false
-            },
-            {
-                "id": "2eOsRR5gfGY",
-                "title": "The Alien Cold War: Silent Competition Among Dormant Empires In A Dark Galaxy",
-                "duration": "47:37",
-                "total_seconds": 2857,
-                "is_processed": false
-            },
-            {
-                "id": "XjSV8VASi9A",
-                "title": "Galactic Beacons: Alien Signals Across Space And Time",
-                "duration": "26:15",
-                "total_seconds": 1575,
-                "is_processed": false
-            },
-            {
-                "id": "B5cNOVzuVDI",
-                "title": "The O'Neill Cylinder Space Habitat: Islands In The Sky",
-                "duration": "38:31",
-                "total_seconds": 2311,
-                "is_processed": false
-            },
-            {
-                "id": "hqOpiiP7Sdk",
-                "title": "Space Marines: Super Soldiers Among the Stars",
-                "duration": "34:30",
-                "total_seconds": 2070,
-                "is_processed": false
-            },
-            {
-                "id": "vMuDVAO57WE",
-                "title": "Post-Scarcity Civilizations: Infinite Resources & Our Future",
-                "duration": "46:25",
-                "total_seconds": 2785,
-                "is_processed": false
-            },
-            {
-                "id": "8afGBtuNnFw",
-                "title": "We've Been Invaded By Aliens... Now What?",
-                "duration": "38:30",
-                "total_seconds": 2310,
-                "is_processed": false
-            },
-            {
-                "id": "3Rvg5Ah35zw",
-                "title": "The Fermi Paradox & Zombie AI - Are Rogue Machines Hiding in the Cosmos?",
-                "duration": "32:36",
-                "total_seconds": 1956,
-                "is_processed": false
-            },
-            {
-                "id": "-b3KHnquMjM",
-                "title": "The Future of Hydroelectric Power: From Mountain Streams to Ocean Tides",
-                "duration": "26:42",
-                "total_seconds": 1602,
-                "is_processed": false
-            },
-            {
-                "id": "PbRKx0ZunZQ",
-                "title": "Crystal Aliens: Life, But Not As We Know It",
-                "duration": "23:13",
-                "total_seconds": 1393,
-                "is_processed": false
-            },
-            {
-                "id": "in2X9vwe9mE",
-                "title": "What Is Hyperspace? Exploring the Science Behind FTL",
-                "duration": "42:44",
-                "total_seconds": 2564,
-                "is_processed": false
-            },
-            {
-                "id": "scrkBRhwPaE",
-                "title": "High-Gravity Worlds: The Planets That Crush You",
-                "duration": "30:46",
-                "total_seconds": 1846,
-                "is_processed": false
-            },
-            {
-                "id": "oSwW7_JkzTQ",
-                "title": "Exiled Space Colonies: Rebellion and Rebirth Beyond Earth",
-                "duration": "33:06",
-                "total_seconds": 1986,
-                "is_processed": false
-            },
-            {
-                "id": "V5l9HTj1BJI",
-                "title": "Gravity By Design - Tether Habitats & Orbital Living",
-                "duration": "27:01",
-                "total_seconds": 1621,
-                "is_processed": false
-            },
-            {
-                "id": "R-59fv_Jqzk",
-                "title": "Buzz Aldrin's Cyclers - A Safe Spaceship To Mars And Beyond",
-                "duration": "24:23",
-                "total_seconds": 1463,
-                "is_processed": false
-            },
-            {
-                "id": "aYyAytV7ZC8",
-                "title": "Methuselah Civilizations: A Society of the Ageless",
-                "duration": "36:11",
-                "total_seconds": 2171,
-                "is_processed": false
-            },
-            {
-                "id": "TOWtNUpnpSA",
-                "title": "What IF We Built A Ladder To Space? Skyhooks & Rotovators",
-                "duration": "37:40",
-                "total_seconds": 2260,
-                "is_processed": false
-            },
-            {
-                "id": "2X-qi3NXxHU",
-                "title": "Gravity Tech: The Power To Reshape Our Civilization... And The Cosmos Themselves",
-                "duration": "29:03",
-                "total_seconds": 1743,
-                "is_processed": false
-            },
-            {
-                "id": "wBqGJl3A4tU",
-                "title": "Topopolis: The Eternal River Space Habitat",
-                "duration": "26:07",
-                "total_seconds": 1567,
-                "is_processed": false
-            },
-            {
-                "id": "bHebv7yq5uA",
-                "title": "Black Sun Rising: Living On A Planet Around A Black Hole",
-                "duration": "33:59",
-                "total_seconds": 2039,
-                "is_processed": false
-            },
-            {
-                "id": "_bVdxSPXmv0",
-                "title": "Impossible Technologies: The Clarketech Compendium",
-                "duration": "01:31:48",
-                "total_seconds": 5508,
-                "is_processed": false
-            },
-            {
-                "id": "WbOYPYSoqxE",
-                "title": "The Kardashev Scale & Population",
-                "duration": "33:27",
-                "total_seconds": 2007,
-                "is_processed": false
-            },
-            {
-                "id": "IhO9H73OPCs",
-                "title": "Xenocide: The Death of Alien Civilizations",
-                "duration": "35:03",
-                "total_seconds": 2103,
-                "is_processed": false
-            },
-            {
-                "id": "iJveFUreHOk",
-                "title": "The Bernal Sphere Space Habitat",
-                "duration": "26:28",
-                "total_seconds": 1588,
-                "is_processed": false
-            },
-            {
-                "id": "uUn3qE6duwM",
-                "title": "The Fermi Paradox: Galactic Great Filters",
-                "duration": "32:23",
-                "total_seconds": 1943,
-                "is_processed": false
-            },
-            {
-                "id": "pZmOov5HH_I",
-                "title": "Giant Space Monsters: Could Leviathans Evolve In The Void?",
-                "duration": "21:04",
-                "total_seconds": 1264,
-                "is_processed": false
-            },
-            {
-                "id": "6FWxY11CAF4",
-                "title": "Civilizations At The End Of Time: Eternal Intelligence",
-                "duration": "43:50",
-                "total_seconds": 2630,
-                "is_processed": false
-            },
-            {
-                "id": "0Zpvcx0HuzU",
-                "title": "Untangling String Theory",
-                "duration": "36:52",
-                "total_seconds": 2212,
-                "is_processed": false
-            },
-            {
-                "id": "u1ojNgPCHGs",
-                "title": "Nanotechnology: The Future of Everything",
-                "duration": "36:49",
-                "total_seconds": 2209,
-                "is_processed": false
-            },
-            {
-                "id": "lgfXmLBOz1s",
-                "title": "Mass Drivers vs Rockets: Which Will Rule the Skies in the Future?",
-                "duration": "37:20",
-                "total_seconds": 2240,
-                "is_processed": false
-            },
-            {
-                "id": "ozHQl1w0oAY",
-                "title": "Upcoming Energy Technologies",
-                "duration": "37:12",
-                "total_seconds": 2232,
-                "is_processed": false
-            },
-            {
-                "id": "E7W59I5r4Cs",
-                "title": "Predictions for Technology, Civilization & Our Future",
-                "duration": "38:09",
-                "total_seconds": 2289,
-                "is_processed": false
-            },
-            {
-                "id": "G-Vb9adhjds",
-                "title": "The Fermi Paradox: Hermit Hypothesis",
-                "duration": "25:24",
-                "total_seconds": 1524,
-                "is_processed": false
-            },
-            {
-                "id": "V0ju74IqW0A",
-                "title": "Space Elevators: Strategies & Status",
-                "duration": "01:09:08",
-                "total_seconds": 4148,
-                "is_processed": false
-            },
-            {
-                "id": "jKNNr9ei9_8",
-                "title": "Gravitic Spaceship Propulsion",
-                "duration": "34:41",
-                "total_seconds": 2081,
-                "is_processed": false
-            },
-            {
-                "id": "ENDLuN34ZEw",
-                "title": "Off The Grid: Technological Autonomy",
-                "duration": "28:47",
-                "total_seconds": 1727,
-                "is_processed": false
-            },
-            {
-                "id": "MNkc-PCwSNo",
-                "title": "The Medusa Spaceship Drive",
-                "duration": "28:11",
-                "total_seconds": 1691,
-                "is_processed": false
-            },
-            {
-                "id": "qJXjQdt0QgA",
-                "title": "Building Biospheres: Engineering Self-Sustaining Ecosystems for Future Worlds",
-                "duration": "32:53",
-                "total_seconds": 1973,
-                "is_processed": false
-            },
-            {
-                "id": "eQ8g1H7RnTA",
-                "title": "The Stanford Torus Space Habitat",
-                "duration": "31:37",
-                "total_seconds": 1897,
-                "is_processed": false
-            },
-            {
-                "id": "yJ-k0Wzf4vE",
-                "title": "Ultra-Relativistic Spaceships: Racing Towards the Speed of Light",
-                "duration": "23:42",
-                "total_seconds": 1422,
-                "is_processed": false
-            },
-            {
-                "id": "M-wMqjuH9eo",
-                "title": "The Fermi Paradox & Gravity: The Heaviest Obstacle To Life, The Universe... And Everything?",
-                "duration": "35:52",
-                "total_seconds": 2152,
-                "is_processed": false
-            },
-            {
-                "id": "k2uqgm0nWwE",
-                "title": "Aliens Have Contacted Us... Now What?",
-                "duration": "44:19",
-                "total_seconds": 2659,
-                "is_processed": false
-            },
-            {
-                "id": "_n3punkST2s",
-                "title": "Nuclear Fusion: Updates & Impacts",
-                "duration": "47:10",
-                "total_seconds": 2830,
-                "is_processed": false
-            },
-            {
-                "id": "_i-u_d-Mze8",
-                "title": "Harvesting Planets: Space Mining and the Future of Resource Extraction",
-                "duration": "36:51",
-                "total_seconds": 2211,
-                "is_processed": false
-            },
-            {
-                "id": "Ws6Q4sMfaKY",
-                "title": "Early Terraforming: The First Steps in Planetary Transformation",
-                "duration": "31:10",
-                "total_seconds": 1870,
-                "is_processed": false
-            },
-            {
-                "id": "DYE4UTwAvng",
-                "title": "Ghost Armadas & Primordial Galactic Wars",
-                "duration": "35:58",
-                "total_seconds": 2158,
-                "is_processed": false
+                "is_processed": true
             },
             {
                 "id": "HksP3PyfBHI",
@@ -4864,154 +4402,35 @@
                 "is_processed": false
             },
             {
-                "id": "aQvIk4ySQ1U",
-                "title": "Posthuman Pathways: Strange And Awesome Destinations On Humanity's Future Journeys",
-                "duration": "42:25",
-                "total_seconds": 2545,
+                "id": "OqD49HClOg8",
+                "title": "Alien Beer Is To Die For...",
+                "duration": "15:50",
+                "total_seconds": 950,
                 "is_processed": false
             },
             {
-                "id": "4AnJSb2ED60",
-                "title": "Ocean Habitats: Artificial Islands, Raft Cities, Submarine Structures, and more…",
-                "duration": "30:19",
-                "total_seconds": 1819,
+                "id": "MCMiguu_WQI",
+                "title": "Bussard Ramjet Starship Drive",
+                "duration": "15:20",
+                "total_seconds": 920,
                 "is_processed": false
             },
             {
-                "id": "fnP4tlubKV0",
-                "title": "Fungal Aliens: Exploring the Possibility of Fungal-Based Extraterrestrial Life",
-                "duration": "28:12",
-                "total_seconds": 1692,
+                "id": "4wub4iyEh8Y",
+                "title": "Help Trash Eating Robots Clean up our Oceans with #TeamSeas",
+                "duration": "02:31",
+                "total_seconds": 151,
                 "is_processed": false
             },
             {
-                "id": "mNarTB9Zzo8",
-                "title": "Colonizing Io: Can Humanity Thrive on Jupiter’s Fiery Moon?",
-                "duration": "35:29",
-                "total_seconds": 2129,
-                "is_processed": false
-            },
-            {
-                "id": "YC3CkyDaxbc",
-                "title": "The Fermi Paradox: Large Moons - Are Massive Moons The Key To Extraterrestrial Life?",
-                "duration": "45:56",
-                "total_seconds": 2756,
-                "is_processed": false
-            },
-            {
-                "id": "D-PwmP9RHm8",
-                "title": "Life As An Asteroid Miner",
-                "duration": "28:09",
-                "total_seconds": 1689,
-                "is_processed": false
-            },
-            {
-                "id": "3IgygSomuc4",
-                "title": "How Do We Stop Privacy From Going Extinct?",
-                "duration": "28:59",
-                "total_seconds": 1739,
-                "is_processed": false
-            },
-            {
-                "id": "BzLMjb2DS0g",
-                "title": "Transcendence: The Fermi Paradox, Enlightenment & Singularity",
-                "duration": "55:52",
-                "total_seconds": 3352,
-                "is_processed": false
-            },
-            {
-                "id": "VifO2SfA5Ic",
-                "title": "Anachronistic Technology: Ancient Tech Future Times",
-                "duration": "38:44",
-                "total_seconds": 2324,
-                "is_processed": false
-            },
-            {
-                "id": "6DyNeWloBss",
-                "title": "The Cities of Mars: Exploring Martian Cityscapes",
-                "duration": "29:44",
-                "total_seconds": 1784,
-                "is_processed": false
-            },
-            {
-                "id": "1ZQLXH2Mv18",
-                "title": "The Library of Babel & Infinite Monkeys: The Quest for Knowledge in a Cosmic Library",
-                "duration": "33:54",
-                "total_seconds": 2034,
-                "is_processed": false
-            },
-            {
-                "id": "qIe0cdOvaAU",
-                "title": "Stellar Nomads: Wanderers of the Cosmos",
-                "duration": "34:11",
-                "total_seconds": 2051,
-                "is_processed": false
-            },
-            {
-                "id": "INexHClh82E",
-                "title": "Gardens Of The Moon: Building Habitable Ecosystems on Earth's Natural Satellite",
-                "duration": "25:55",
-                "total_seconds": 1555,
-                "is_processed": false
-            },
-            {
-                "id": "QukHMCmY7h8",
-                "title": "Retrocausality: Cause After Effect",
-                "duration": "26:00",
-                "total_seconds": 1560,
-                "is_processed": false
-            },
-            {
-                "id": "Y7yMNrtD9G8",
-                "title": "Battlefleets",
-                "duration": "45:46",
-                "total_seconds": 2746,
-                "is_processed": false
-            },
-            {
-                "id": "ZBNL7kq7Pbg",
-                "title": "The Next Technological Revolution: What’s Coming?",
-                "duration": "45:03",
-                "total_seconds": 2703,
-                "is_processed": false
-            },
-            {
-                "id": "-syN4k6RlHw",
-                "title": "Were Primitive Humans Uplifted By Aliens?",
-                "duration": "46:23",
-                "total_seconds": 2783,
-                "is_processed": false
-            },
-            {
-                "id": "zA0Zo7hpbRk",
-                "title": "The Fermi Paradox: Migration",
-                "duration": "49:21",
-                "total_seconds": 2961,
-                "is_processed": false
-            },
-            {
-                "id": "RfD1fOoRl3s",
-                "title": "Life As A Planetary Governor",
-                "duration": "44:11",
-                "total_seconds": 2651,
-                "is_processed": false
-            },
-            {
-                "id": "AZC1ElYVfJ0",
-                "title": "Nomadic Miners On The Moon",
-                "duration": "24:57",
-                "total_seconds": 1497,
-                "is_processed": false
-            },
-            {
-                "id": "qwSkIL6aQis",
-                "title": "Self-Repairing Machines",
-                "duration": "31:39",
-                "total_seconds": 1899,
+                "id": "crVV5ycgSHY",
+                "title": "The Geopolitics of Space Colonization",
+                "duration": "19:26",
+                "total_seconds": 1166,
                 "is_processed": false
             }
         ],
-        "nextPageToken": "EAAaHlBUOkNHUWlFRFpGTURoRE5UazNPVVpFUmprNU1qaw"
+        "nextPageToken": "EAAaH1BUOkNQUURJaEJDTmtNeU56Z3dRMFEwUlRFeVF6QkI"
     },
     "UCKV-ss6h_0ALUSwHQV7Hl9w": {
         "videos": [

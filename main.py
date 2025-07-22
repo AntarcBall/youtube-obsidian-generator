@@ -74,17 +74,18 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("YouTube 스크립트 분석기")
-        self.geometry("924x568")
+        self.geometry("1224x568")
 
         # --- UI 상태 변수 ---
         self.font_size = CONFIG['font_size']
         self.is_dark_mode = tk.BooleanVar(value=(CONFIG['theme'] == 'dark'))
         self.include_shorts = tk.BooleanVar(value=CONFIG.get('include_shorts', False))
         self.min_duration_seconds = tk.IntVar(value=CONFIG.get('min_video_duration', 120))
+        self.max_duration_seconds = tk.IntVar(value=CONFIG.get('max_video_duration', 3600)) # Default to 60 minutes (3600 seconds)
         self.keep_original_title = tk.BooleanVar(value=CONFIG.get('keep_original_title', False))
         self.auto_quit_on_completion = tk.BooleanVar(value=CONFIG.get('auto_quit_on_completion', False))
         self.insert_dash_in_titles = tk.BooleanVar(value=CONFIG.get('insert_dash_in_titles', True))
-        self.gemini_model_var = tk.StringVar(value=CONFIG.get('gemini_model', 'gemini-2.0-flash'))
+        self.gemini_model_var = tk.StringVar(value=CONFIG.get('gemini_model', 'gemini-2.0-flash-lite'))
         
         # --- 스타일 설정 ---
         self.style = ttk.Style(self)
@@ -131,11 +132,17 @@ class App(tk.Tk):
         if hasattr(self, 'progress_text') and self.progress_text.winfo_exists():
             self.progress_text.config(bg=entry_bg, fg=fg_color, font=current_font)
             
-    def update_duration_label(self, *args):
+    def update_min_duration_label(self, *args):
         total_seconds = self.min_duration_seconds.get()
         minutes = total_seconds // 60
         seconds = total_seconds % 60
-        self.duration_label.config(text=f"{minutes}분 {seconds}초")
+        self.min_duration_label.config(text=f"{minutes}분 {seconds}초")
+
+    def update_max_duration_label(self, *args):
+        total_seconds = self.max_duration_seconds.get()
+        minutes = total_seconds // 60
+        seconds = total_seconds % 60
+        self.max_duration_label.config(text=f"{minutes}분 {seconds}초")
 
     def change_font_size(self, delta):
         new_size = self.font_size + delta
@@ -169,53 +176,79 @@ class App(tk.Tk):
         ttk.Checkbutton(row2_frame, text="완료 시 자동 종료", variable=self.auto_quit_on_completion).pack(side="left", padx=10)
         ttk.Checkbutton(row2_frame, text="제목에 대시 삽입", variable=self.insert_dash_in_titles).pack(side="left", padx=10)
 
-        # 폰트 크기 조절 버튼
-        font_button_frame = ttk.Frame(control_frame)
-        font_button_frame.pack(side="left", padx=20)
-        ttk.Button(font_button_frame, text="글씨 작게", command=lambda: self.change_font_size(-1)).pack(side="left", padx=5)
-        ttk.Button(font_button_frame, text="글씨 크게", command=lambda: self.change_font_size(1)).pack(side="left", padx=5)
+        # 슬라이더 프레임
+        sliders_frame = ttk.Frame(control_frame)
+        sliders_frame.pack(fill='x', pady=(5, 0))
+
+
+
+        # 슬라이더 프레임
+        sliders_frame = ttk.Frame(control_frame)
+        sliders_frame.pack(fill='x', pady=(5, 0))
+
+        # 최소 영상 길이 설정 (슬라이더)
+        min_duration_frame = ttk.Frame(sliders_frame)
+        min_duration_frame.pack(side="left", padx=10)
+        ttk.Label(min_duration_frame, text="최소 영상 길이 (분):").pack(side="left")
+        self.min_duration_slider = ttk.Scale(min_duration_frame, from_=0, to=60, orient="horizontal", variable=self.min_duration_seconds, command=self.update_min_duration_label)
+        self.min_duration_slider.pack(side="left", padx=5)
+        self.min_duration_label = ttk.Label(min_duration_frame, text="2분 0초")
+        self.min_duration_label.pack(side="left")
+        self.update_min_duration_label() # 초기값 설정
+
+        # 최대 영상 길이 설정 (슬라이더)
+        max_duration_frame = ttk.Frame(sliders_frame)
+        max_duration_frame.pack(side="left", padx=10)
+        ttk.Label(max_duration_frame, text="최대 영상 길이 (분):").pack(side="left")
+        self.max_duration_slider = ttk.Scale(max_duration_frame, from_=0, to=9600, orient="horizontal", variable=self.max_duration_seconds, command=self.update_max_duration_label)
+        self.max_duration_slider.pack(side="left", padx=5)
+        self.max_duration_label = ttk.Label(max_duration_frame, text="20분 0초")
+        self.max_duration_label.pack(side="left")
+        self.update_max_duration_label() # 초기값 설정
 
         # Gemini 모델 선택 라디오 버튼
         model_frame = ttk.Frame(control_frame)
-        model_frame.pack(side="left", padx=10)
+        model_frame.pack(fill='x', pady=(5, 0))
         ttk.Label(model_frame, text="Gemini 모델:").pack(side="left")
         ttk.Radiobutton(model_frame, text="1.5 Flash", variable=self.gemini_model_var, value="gemini-1.5-flash").pack(side="left", padx=2)
         ttk.Radiobutton(model_frame, text="2.0 Flash", variable=self.gemini_model_var, value="gemini-2.0-flash").pack(side="left", padx=2)
         ttk.Radiobutton(model_frame, text="2.5 Flash", variable=self.gemini_model_var, value="gemini-2.5-flash").pack(side="left", padx=2)
-
-        # 최소 영상 길이 설정 (슬라이더)
-        duration_frame = ttk.Frame(control_frame)
-        duration_frame.pack(side="left", padx=10)
-        ttk.Label(duration_frame, text="최소 영상 길이 (분):").pack(side="left")
-        self.duration_slider = ttk.Scale(duration_frame, from_=0, to=60, orient="horizontal", variable=self.min_duration_seconds, command=self.update_duration_label)
-        self.duration_slider.pack(side="left", padx=5)
-        self.duration_label = ttk.Label(duration_frame, text="2분 0초")
-        self.duration_label.pack(side="left")
-        self.update_duration_label() # 초기값 설정
+        ttk.Radiobutton(model_frame, text="2.0 Flash Lite", variable=self.gemini_model_var, value="gemini-2.0-flash-lite").pack(side="left", padx=2)
 
         main_content_frame = ttk.Frame(scene1)
-        main_content_frame.pack(fill="both", expand=True)
+        main_content_frame.pack(fill="both", expand=True, pady=10)
 
-        ttk.Label(main_content_frame, text="유튜브 채널 URL:").pack(pady=(0, 5), anchor='w')
-        self.url_entry = ttk.Entry(main_content_frame)
-        self.url_entry.pack(fill="x", pady=(0, 15))
-        self.url_entry.insert(0, CONFIG.get('youtube_url', ''))
+        # URL 입력
+        url_frame = ttk.Frame(main_content_frame)
+        url_frame.pack(fill='x', pady=(5, 5))
+        ttk.Label(url_frame, text="YouTube 채널 URL:").pack(side="left", padx=(0, 10))
+        self.url_entry = ttk.Entry(url_frame)
+        self.url_entry.pack(side="left", expand=True, fill="x")
+        self.url_entry.insert(0, CONFIG.get("youtube_url", ""))
 
-        ttk.Label(main_content_frame, text="Obsidian 저장 경로:").pack(pady=(0, 5), anchor='w')
+        # 저장 경로 입력
         path_frame = ttk.Frame(main_content_frame)
-        path_frame.pack(fill="x", pady=(0, 15))
+        path_frame.pack(fill='x', pady=(0, 10))
+        ttk.Label(path_frame, text="Obsidian 저장 경로:").pack(side="left", padx=(0, 10))
         self.path_entry = ttk.Entry(path_frame)
-        self.path_entry.pack(side="left", fill="x", expand=True)
-        self.path_entry.insert(0, CONFIG.get('obsidian_path', ''))
-        ttk.Button(path_frame, text="경로 선택", command=self.browse_path).pack(side="left", padx=(5, 0))
+        self.path_entry.pack(side="left", expand=True, fill="x", padx=(0, 5))
+        self.path_entry.insert(0, CONFIG.get("obsidian_path", ""))
+        ttk.Button(path_frame, text="찾아보기", command=self.browse_path).pack(side="left")
 
         ttk.Label(main_content_frame, text="Gemini 프롬프트:").pack(pady=(0, 5), anchor='w')
         self.prompt_text = scrolledtext.ScrolledText(main_content_frame, height=10, relief="solid", borderwidth=1)
         self.prompt_text.pack(fill="both", expand=True, pady=(0, 15))
         self.prompt_text.insert(tk.END, DEFAULT_PROMPT)
 
-        self.confirm_btn1 = ttk.Button(main_content_frame, text="영상 목록 불러오기", command=self.start_fetching_videos)
-        self.confirm_btn1.pack(pady=10, ipady=5)
+        bottom_button_frame = ttk.Frame(main_content_frame)
+        bottom_button_frame.pack(fill="x", pady=10)
+
+        self.confirm_btn1 = ttk.Button(bottom_button_frame, text="영상 목록 불러오기", command=self.start_fetching_videos)
+        self.confirm_btn1.pack(side="left", ipady=5, expand=True, fill="x")
+
+        # 폰트 크기 조절 버튼
+        ttk.Button(bottom_button_frame, text="글씨 작게", command=lambda: self.change_font_size(-1)).pack(side="right", padx=5)
+        ttk.Button(bottom_button_frame, text="글씨 크게", command=lambda: self.change_font_size(1)).pack(side="right", padx=5)
         
         return scene1
 
@@ -274,7 +307,9 @@ class App(tk.Tk):
             for video in self.all_videos:
                 if not self.include_shorts.get() and video['title'].strip().endswith('#비밀치트키'):
                     continue
-                if video.get('total_seconds', 0) < self.min_video_duration:
+                if video.get('total_seconds', 0) < self.min_duration_seconds.get():
+                    continue
+                if video.get('total_seconds', 0) > self.max_duration_seconds.get():
                     continue
                 
                 video['is_processed'] = video['id'] in processed_log
@@ -359,7 +394,9 @@ class App(tk.Tk):
             for video in videos_batch:
                 if not self.include_shorts.get() and video['title'].strip().endswith('#비밀치트키'):
                     continue
-                if video.get('total_seconds', 0) < self.min_video_duration:
+                if video.get('total_seconds', 0) < self.min_duration_seconds.get():
+                    continue
+                if video.get('total_seconds', 0) > self.max_duration_seconds.get():
                     continue
                 video['is_processed'] = video['id'] in processed_log
                 filtered_batch.append(video)
