@@ -27,7 +27,7 @@ def load_config(filepath="config.json"):
         "youtube_url": "https://www.youtube.com/@slow_doctor",
         "min_video_duration": 120, # Default to 2 minutes (120 seconds)
         "run_ip_test": True, # Default to True
-        "gemini_model": "gemini-1.5-flash", # Default Gemini model
+        "gemini_model": "gemini-2.0-flash", # Default Gemini model
         "list_load_batch_size": 50, # Default to 50
         "include_shorts": False, # Default to False
         "keep_original_title": False, # Default to False
@@ -68,6 +68,7 @@ def load_prompt_from_json(filepath="default_prompt.json"):
 # --- 기본 설정 ---
 DEFAULT_PROMPT = load_prompt_from_json()
 CONFIG = load_config()
+print(f"Loaded gemini_batch_size from config: {CONFIG.get('gemini_batch_size')}")
 
 class App(tk.Tk):
     def __init__(self):
@@ -83,7 +84,7 @@ class App(tk.Tk):
         self.keep_original_title = tk.BooleanVar(value=CONFIG.get('keep_original_title', False))
         self.auto_quit_on_completion = tk.BooleanVar(value=CONFIG.get('auto_quit_on_completion', False))
         self.insert_dash_in_titles = tk.BooleanVar(value=CONFIG.get('insert_dash_in_titles', True))
-        self.gemini_model_var = tk.StringVar(value=CONFIG.get('gemini_model', 'gemini-2.5-flash'))
+        self.gemini_model_var = tk.StringVar(value=CONFIG.get('gemini_model', 'gemini-2.0-flash'))
         
         # --- 스타일 설정 ---
         self.style = ttk.Style(self)
@@ -179,6 +180,7 @@ class App(tk.Tk):
         model_frame.pack(side="left", padx=10)
         ttk.Label(model_frame, text="Gemini 모델:").pack(side="left")
         ttk.Radiobutton(model_frame, text="1.5 Flash", variable=self.gemini_model_var, value="gemini-1.5-flash").pack(side="left", padx=2)
+        ttk.Radiobutton(model_frame, text="2.0 Flash", variable=self.gemini_model_var, value="gemini-2.0-flash").pack(side="left", padx=2)
         ttk.Radiobutton(model_frame, text="2.5 Flash", variable=self.gemini_model_var, value="gemini-2.5-flash").pack(side="left", padx=2)
 
         # 최소 영상 길이 설정 (슬라이더)
