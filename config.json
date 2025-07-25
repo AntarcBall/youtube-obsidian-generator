@@ -13,5 +13,6 @@
     "include_shorts": false,
     "keep_original_title": true,
     "auto_quit_on_completion": false,
-    "insert_dash_in_titles": false
+    "insert_dash_in_titles": false,
+    "ignore_shorter_duplicates": false
 }

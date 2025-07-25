@@ -11,7 +11,7 @@ from .file_helper import load_api_key
 import os
 import json
 
-YOUTUBE_API_KEY = load_api_key("myapi")
+YOUTUBE_API_KEY = load_api_key("youtube_api_key")
 youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
 # --- Cache Setup ---

@@ -62,6 +62,10 @@
     "insert_dash_in_titles": {
       "type": "boolean",
       "description": "Whether to insert a dash in the titles of the generated files."
+    },
+    "ignore_shorter_duplicates": {
+      "type": "boolean",
+      "description": "If a new video's title already exists, ignore the shorter one."
     }
   },
   "required": [
@@ -77,6 +81,7 @@
     "include_shorts",
     "keep_original_title",
     "auto_quit_on_completion",
-    "insert_dash_in_titles"
+    "insert_dash_in_titles",
+    "ignore_shorter_duplicates"
   ]
 }

@@ -11,6 +11,7 @@ from datetime import datetime
 import pytz
 import time
 import sys
+import re
 
 sys.stdout.reconfigure(encoding='utf-8')
 from utils import youtube_helper, gemini_helper, file_helper
@@ -31,7 +32,8 @@ def load_config(filepath="config.json"):
         "list_load_batch_size": 50, # Default to 50
         "include_shorts": False, # Default to False
         "keep_original_title": False, # Default to False
-        "auto_quit_on_completion": False # Default to False
+        "auto_quit_on_completion": False, # Default to False
+        "ignore_shorter_duplicates": False # Default to False
     }
 
     if not os.path.exists(config_path):
@@ -96,6 +98,7 @@ class App(tk.Tk):
         self.keep_original_title = tk.BooleanVar(value=CONFIG.get('keep_original_title', False))
         self.auto_quit_on_completion = tk.BooleanVar(value=CONFIG.get('auto_quit_on_completion', False))
         self.insert_dash_in_titles = tk.BooleanVar(value=CONFIG.get('insert_dash_in_titles', True))
+        self.ignore_shorter_duplicates = tk.BooleanVar(value=CONFIG.get('ignore_shorter_duplicates', False))
         self.gemini_model_var = tk.StringVar(value=CONFIG.get('gemini_model', 'gemini-2.0-flash-lite'))
         
         # --- 스타일 설정 ---
@@ -112,6 +115,19 @@ class App(tk.Tk):
         self.all_videos = [] # 모든 로드된 영상을 저장할 리스트
         self.next_page_token = None # 다음 페이지 로드를 위한 토큰
         self.channel_url_for_batch = None # 현재 로드 중인 채널 URL
+
+    def _normalize_title_for_deduplication(self, title):
+        """Deduplication을 위해 영상 제목을 정규화합니다."""
+        # 소문자로 변환
+        title = title.lower()
+        # 괄호와 그 안의 내용 제거 (e.g., [Full], (Official))
+        title = re.sub(r'\[.*?\]', '', title)
+        title = re.sub(r'\(.*?\)', '', title)
+        # 특수문자를 공백으로 변환 (알파벳, 숫자, 한글, 공백 제외)
+        title = re.sub(r'[^\w\s가-힣]', ' ', title)
+        # 여러 공백을 하나로
+        title = re.sub(r'\s+', ' ', title).strip()
+        return title
 
     def update_styles(self):
         """UI의 폰트와 색상 테마를 업데이트합니다."""
@@ -186,6 +202,7 @@ class App(tk.Tk):
         row2_frame.pack(fill='x', pady=(5, 0))
         ttk.Checkbutton(row2_frame, text="완료 시 자동 종료", variable=self.auto_quit_on_completion).pack(side="left", padx=10)
         ttk.Checkbutton(row2_frame, text="제목에 대시 삽입", variable=self.insert_dash_in_titles).pack(side="left", padx=10)
+        ttk.Checkbutton(row2_frame, text="중복 영상 짧은 제목 무시", variable=self.ignore_shorter_duplicates).pack(side="left", padx=10)
 
         # 슬라이더 프레임
         sliders_frame = ttk.Frame(control_frame)
@@ -211,7 +228,7 @@ class App(tk.Tk):
         max_duration_frame = ttk.Frame(sliders_frame)
         max_duration_frame.pack(side="left", padx=10)
         ttk.Label(max_duration_frame, text="최대 영상 길이 (분):").pack(side="left")
-        self.max_duration_slider = ttk.Scale(max_duration_frame, length=500,from_=0, to=9600, orient="horizontal", variable=self.max_duration_seconds, command=self.update_max_duration_label)
+        self.max_duration_slider = ttk.Scale(max_duration_frame, length=500,from_=0, to=3000, orient="horizontal", variable=self.max_duration_seconds, command=self.update_max_duration_label)
         self.max_duration_slider.pack(side="left", padx=5)
         self.max_duration_label = ttk.Label(max_duration_frame, text="20분 0초")
         self.max_duration_label.pack(side="left")
@@ -315,12 +332,32 @@ class App(tk.Tk):
                     max_results=CONFIG.get("list_load_batch_size", 100)
                 )
                 self.all_videos = videos_batch
+                # 원본 비디오 목록을 캐시에 저장
                 youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
+            
+            # 필터링과 중복 제거를 적용할 원본 데이터 복사
+            videos_to_process = list(self.all_videos)
+
+            # 중복 제거 및 필터링
+            final_videos = []
+            if self.ignore_shorter_duplicates.get():
+                # 제목을 키로 하고 가장 긴 영상을 값으로 하는 딕셔너리
+                unique_videos_by_title = {}
+                for video in videos_to_process:
+                    normalized_title = self._normalize_title_for_deduplication(video['title'])
+                    if not normalized_title: # 정규화 후 제목이 비는 경우 건너뛰기
+                        continue
+                    if normalized_title not in unique_videos_by_title or \
+                       video.get('total_seconds', 0) > unique_videos_by_title[normalized_title].get('total_seconds', 0):
+                        unique_videos_by_title[normalized_title] = video
+                final_videos = list(unique_videos_by_title.values())
+            else:
+                final_videos = videos_to_process
 
             # 필터링 및 'is_processed' 플래그 적용
             processed_log = youtube_helper.load_processed_videos_log()
             filtered_videos = []
-            for video in self.all_videos:
+            for video in final_videos: # final_videos를 사용
                 if not self.include_shorts.get() and video['title'].strip().endswith('#비밀치트키'):
                     continue
                 if video.get('total_seconds', 0) < self.min_duration_seconds.get():
@@ -331,8 +368,8 @@ class App(tk.Tk):
                 video['is_processed'] = video['id'] in processed_log
                 filtered_videos.append(video)
             
-            self.all_videos = filtered_videos
-            self.q.put(("videos_fetched", self.all_videos))
+            # UI에 표시될 비디오는 필터링된 목록이지만, self.all_videos는 원본을 유지
+            self.q.put(("videos_fetched", filtered_videos))
 
         except Exception as e:
             self.q.put(("error", f"영상 목록 로딩 실패: {e}"))
@@ -404,10 +441,33 @@ class App(tk.Tk):
                 page_token=self.next_page_token
             )
             
-            # 필터링 및 플래그 추가
+            # 새로 로드된 비디오를 기존 원본 목록에 추가
+            self.all_videos.extend(videos_batch)
+            
+            # 업데이트된 전체 원본 목록을 캐시에 저장
+            youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
+
+            # 필터링과 중복 제거를 적용할 데이터 복사
+            videos_to_process = list(self.all_videos)
+            
+            final_videos_after_load_more = []
+            if self.ignore_shorter_duplicates.get():
+                unique_videos_by_title = {}
+                for video in videos_to_process:
+                    normalized_title = self._normalize_title_for_deduplication(video['title'])
+                    if not normalized_title: # 정규화 후 제목이 비는 경우 건너뛰기
+                        continue
+                    if normalized_title not in unique_videos_by_title or \
+                       video.get('total_seconds', 0) > unique_videos_by_title[normalized_title].get('total_seconds', 0):
+                        unique_videos_by_title[normalized_title] = video
+                final_videos_after_load_more = list(unique_videos_by_title.values())
+            else:
+                final_videos_after_load_more = videos_to_process
+
+            # 필터링 및 'is_processed' 플래그 추가
             processed_log = youtube_helper.load_processed_videos_log()
-            filtered_batch = []
-            for video in videos_batch:
+            filtered_videos_for_all = []
+            for video in final_videos_after_load_more:
                 if not self.include_shorts.get() and video['title'].strip().endswith('#비밀치트키'):
                     continue
                 if video.get('total_seconds', 0) < self.min_duration_seconds.get():
@@ -415,13 +475,10 @@ class App(tk.Tk):
                 if video.get('total_seconds', 0) > self.max_duration_seconds.get():
                     continue
                 video['is_processed'] = video['id'] in processed_log
-                filtered_batch.append(video)
+                filtered_videos_for_all.append(video)
 
-            # 전체 비디오 목록 및 캐시 업데이트
-            self.all_videos.extend(filtered_batch)
-            youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
-            
-            self.q.put(("add_videos_to_tree", filtered_batch))
+            # videos_fetched 이벤트를 사용하여 Treeview 전체 갱신
+            self.q.put(("videos_fetched", filtered_videos_for_all))
         except Exception as e:
             self.q.put(("error", f"추가 영상 로딩 실패: {e}"))
 

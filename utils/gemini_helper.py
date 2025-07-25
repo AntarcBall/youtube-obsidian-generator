@@ -6,7 +6,7 @@ import json
 import os
 from .file_helper import load_api_key
 
-GEMINI_API_KEY = load_api_key("myapi")
+GEMINI_API_KEY = load_api_key("gemini_api_key")
 genai.configure(api_key=GEMINI_API_KEY)
 
 def load_gemini_model_from_config():
