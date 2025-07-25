@@ -210,6 +210,7 @@ class App(tk.Tk):
 
 
 
+
         # 슬라이더 프레임
         sliders_frame = ttk.Frame(control_frame)
         sliders_frame.pack(fill='x', pady=(5, 0))
