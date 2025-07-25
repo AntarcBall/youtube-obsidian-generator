@@ -65,10 +65,21 @@ def load_prompt_from_json(filepath="default_prompt.json"):
         print(f"경고: 프롬프트 파일 로딩 실패 - {e}. 기본 프롬프트를 사용합니다.")
         return "다음 텍스트를 요약하고 정리해주세요:\n\n"
 
+def save_config(config, filepath="config.json"):
+    """지정된 설정 객체를 JSON 파일에 저장합니다."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(script_dir, filepath)
+    try:
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(config, f, ensure_ascii=False, indent=4)
+    except IOError as e:
+        print(f"설정 파일 저장 실패: {e}")
+
 # --- 기본 설정 ---
 DEFAULT_PROMPT = load_prompt_from_json()
 CONFIG = load_config()
 print(f"Loaded gemini_batch_size from config: {CONFIG.get('gemini_batch_size')}")
+
 
 class App(tk.Tk):
     def __init__(self):
@@ -190,7 +201,7 @@ class App(tk.Tk):
         min_duration_frame = ttk.Frame(sliders_frame)
         min_duration_frame.pack(side="left", padx=10)
         ttk.Label(min_duration_frame, text="최소 영상 길이 (분):").pack(side="left")
-        self.min_duration_slider = ttk.Scale(min_duration_frame, from_=0, to=60, orient="horizontal", variable=self.min_duration_seconds, command=self.update_min_duration_label)
+        self.min_duration_slider = ttk.Scale(min_duration_frame , length=150,from_=0, to=60, orient="horizontal", variable=self.min_duration_seconds, command=self.update_min_duration_label)
         self.min_duration_slider.pack(side="left", padx=5)
         self.min_duration_label = ttk.Label(min_duration_frame, text="2분 0초")
         self.min_duration_label.pack(side="left")
@@ -200,7 +211,7 @@ class App(tk.Tk):
         max_duration_frame = ttk.Frame(sliders_frame)
         max_duration_frame.pack(side="left", padx=10)
         ttk.Label(max_duration_frame, text="최대 영상 길이 (분):").pack(side="left")
-        self.max_duration_slider = ttk.Scale(max_duration_frame, from_=0, to=9600, orient="horizontal", variable=self.max_duration_seconds, command=self.update_max_duration_label)
+        self.max_duration_slider = ttk.Scale(max_duration_frame, length=500,from_=0, to=9600, orient="horizontal", variable=self.max_duration_seconds, command=self.update_max_duration_label)
         self.max_duration_slider.pack(side="left", padx=5)
         self.max_duration_label = ttk.Label(max_duration_frame, text="20분 0초")
         self.max_duration_label.pack(side="left")
@@ -267,6 +278,11 @@ class App(tk.Tk):
         if not self.channel_url or not self.obsidian_path:
             messagebox.showerror("입력 오류", "채널 URL과 저장 경로는 필수입니다.")
             return
+
+        # 설정 저장
+        CONFIG['youtube_url'] = self.channel_url
+        CONFIG['obsidian_path'] = self.obsidian_path
+        save_config(CONFIG)
 
         self.confirm_btn1.config(state="disabled", text="불러오는 중...")
         self.all_videos = [] # 새 채널 로드 시 초기화

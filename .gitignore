@@ -1,4 +1,4 @@
-cache
+cache/
 .env
 __pycache__/
 MYAPI.json
