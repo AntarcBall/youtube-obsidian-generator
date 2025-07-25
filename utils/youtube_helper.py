@@ -14,55 +14,58 @@ import json
 YOUTUBE_API_KEY = load_api_key("youtube_api_key")
 youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
-# --- Cache Setup ---
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-CACHE_DIR = os.path.join(SCRIPT_DIR, '..', 'cache')
-PROCESSED_VIDEOS_LOG_PATH = os.path.join(CACHE_DIR, 'processed_videos.json')
-VIDEO_LIST_CACHE_PATH = os.path.join(CACHE_DIR, 'video_list_cache.json')
+def _get_cache_path(config, key):
+    """Helper to get full cache path from config."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Use os.path.join to construct paths safely
+    return os.path.join(script_dir, '..', config['cache_paths'][key])
 
-if not os.path.exists(CACHE_DIR):
-    os.makedirs(CACHE_DIR)
-
-def load_processed_videos_log():
+def load_processed_videos_log(config):
     """처리된 비디오 ID 목록을 로그 파일에서 로드합니다."""
-    if not os.path.exists(PROCESSED_VIDEOS_LOG_PATH):
+    log_path = _get_cache_path(config, 'processed_videos_log')
+    if not os.path.exists(log_path):
         return []
     try:
-        with open(PROCESSED_VIDEOS_LOG_PATH, 'r', encoding='utf-8') as f:
+        with open(log_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except (json.JSONDecodeError, IOError):
         return []
 
-def log_processed_video(video_id):
+def log_processed_video(video_id, config):
     """처리된 비디오 ID를 로그에 추가합니다."""
-    log = load_processed_videos_log()
+    log = load_processed_videos_log(config)
     if video_id not in log:
         log.append(video_id)
+        log_path = _get_cache_path(config, 'processed_videos_log')
         try:
-            with open(PROCESSED_VIDEOS_LOG_PATH, 'w', encoding='utf-8') as f:
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+            with open(log_path, 'w', encoding='utf-8') as f:
                 json.dump(log, f, ensure_ascii=False, indent=4)
         except IOError as e:
             print(f"Error saving to processed videos log: {e}")
 
-def load_video_list_cache():
+def load_video_list_cache(config):
     """JSON 캐시 파일에서 비디오 목록 데이터를 로드합니다."""
-    if not os.path.exists(VIDEO_LIST_CACHE_PATH):
+    cache_path = _get_cache_path(config, 'video_list_cache')
+    if not os.path.exists(cache_path):
         return {}
     try:
-        with open(VIDEO_LIST_CACHE_PATH, 'r', encoding='utf-8') as f:
+        with open(cache_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except (json.JSONDecodeError, IOError):
         return {}
 
-def save_video_list_to_cache(channel_id, videos, next_page_token):
+def save_video_list_to_cache(channel_id, videos, next_page_token, config):
     """채널의 비디오 목록과 다음 페이지 토큰을 JSON 캐시에 저장합니다."""
-    cache = load_video_list_cache()
+    cache = load_video_list_cache(config)
     cache[channel_id] = {
         "videos": videos,
         "nextPageToken": next_page_token
     }
+    cache_path = _get_cache_path(config, 'video_list_cache')
     try:
-        with open(VIDEO_LIST_CACHE_PATH, 'w', encoding='utf-8') as f:
+        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+        with open(cache_path, 'w', encoding='utf-8') as f:
             json.dump(cache, f, ensure_ascii=False, indent=4)
     except IOError as e:
         print(f"Error saving to video list cache: {e}")
@@ -154,7 +157,7 @@ def get_videos_from_channel(channel_url, max_results=50, page_token=None):
             video_ids.append(video_id)
             video_titles[video_id] = title
 
-    next_page_token = res.get('nextPageToken')
+    next_page_token = res.get('next_page_token')
     
     videos = []
     if video_ids:
@@ -251,3 +254,13 @@ def get_transcript(video_id, proxy_url=None):
             return None, 0
 
     return text_only, word_count
+
+def get_video_title(video_id):
+    """주어진 비디오 ID의 제목을 가져옵니다."""
+    try:
+        video_url = f'https.youtube.com/watch?v={video_id}'
+        yt = YouTube(video_url)
+        return yt.title
+    except Exception as e:
+        print(f"제목을 가져오는 중 오류 발생 (ID: {video_id}): {e}")
+        return None

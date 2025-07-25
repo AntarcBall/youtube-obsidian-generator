@@ -14,5 +14,48 @@
     "keep_original_title": true,
     "auto_quit_on_completion": false,
     "insert_dash_in_titles": false,
-    "ignore_shorter_duplicates": false
+    "ignore_shorter_duplicates": true,
+    "window_geometry": "1224x568",
+    "slider_ranges": {
+        "min_duration": {
+            "from": 0,
+            "to": 60
+        },
+        "max_duration": {
+            "from": 0,
+            "to": 3000
+        }
+    },
+    "treeview_widths": {
+        "title": 600,
+        "duration": 100
+    },
+    "theme_colors": {
+        "dark": {
+            "bg": "#2E2E2E",
+            "fg": "#FFFFFF",
+            "entry_bg": "#3C3C3C",
+            "btn_bg": "#555555",
+            "tree_bg": "#3C3C3C",
+            "tree_heading_bg": "#555555",
+            "btn_active": "#6E6E6E",
+            "tree_heading_active": "#6E6E6E"
+        },
+        "light": {
+            "bg": "#F0F0F0",
+            "fg": "#000000",
+            "entry_bg": "#FFFFFF",
+            "btn_bg": "#E1E1E1",
+            "tree_bg": "#FFFFFF",
+            "tree_heading_bg": "#E1E1E1",
+            "btn_active": "#C0C0C0",
+            "tree_heading_active": "#D0D0D0"
+        },
+        "processed": "#5DADE2"
+    },
+    "default_filename": "untitled",
+    "cache_paths": {
+        "processed_videos_log": "cache/processed_videos.json",
+        "video_list_cache": "cache/video_list_cache.json"
+    }
 }

@@ -21,19 +21,47 @@ def load_config(filepath="config.json"):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(script_dir, filepath)
     defaults = {
-        "font_size": 12, 
+        "font_size": 12,
         "theme": "dark",
         "obsidian_path": "C:/Users/bounc/OneDrive/Document/SummerVCT/Notes",
         "gemini_batch_size": 30,
         "youtube_url": "https://www.youtube.com/@slow_doctor",
-        "min_video_duration": 120, # Default to 2 minutes (120 seconds)
-        "run_ip_test": True, # Default to True
-        "gemini_model": "gemini-2.0-flash", # Default Gemini model
-        "list_load_batch_size": 50, # Default to 50
-        "include_shorts": False, # Default to False
-        "keep_original_title": False, # Default to False
-        "auto_quit_on_completion": False, # Default to False
-        "ignore_shorter_duplicates": False # Default to False
+        "min_video_duration": 120,
+        "max_video_duration": 3600,
+        "run_ip_test": True,
+        "gemini_model": "gemini-2.0-flash",
+        "list_load_batch_size": 50,
+        "include_shorts": False,
+        "keep_original_title": False,
+        "auto_quit_on_completion": False,
+        "ignore_shorter_duplicates": False,
+        "window_geometry": "1224x568",
+        "slider_ranges": {
+            "min_duration": {"from": 0, "to": 60},
+            "max_duration": {"from": 0, "to": 3000}
+        },
+        "treeview_widths": {
+            "title": 600,
+            "duration": 100
+        },
+        "theme_colors": {
+            "dark": {
+                "bg": "#2E2E2E", "fg": "#FFFFFF", "entry_bg": "#3C3C3C",
+                "btn_bg": "#555555", "tree_bg": "#3C3C3C", "tree_heading_bg": "#555555",
+                "btn_active": "#6E6E6E", "tree_heading_active": "#6E6E6E"
+            },
+            "light": {
+                "bg": "#F0F0F0", "fg": "#000000", "entry_bg": "#FFFFFF",
+                "btn_bg": "#E1E1E1", "tree_bg": "#FFFFFF", "tree_heading_bg": "#E1E1E1",
+                "btn_active": "#C0C0C0", "tree_heading_active": "#D0D0D0"
+            },
+            "processed": "#5DADE2"
+        },
+        "default_filename": "untitled",
+        "cache_paths": {
+            "processed_videos_log": "cache/processed_videos.json",
+            "video_list_cache": "cache/video_list_cache.json"
+        }
     }
 
     if not os.path.exists(config_path):
@@ -87,14 +115,14 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("YouTube 스크립트 분석기")
-        self.geometry("1224x568")
+        self.geometry(CONFIG.get("window_geometry", "1224x568"))
 
         # --- UI 상태 변수 ---
         self.font_size = CONFIG['font_size']
         self.is_dark_mode = tk.BooleanVar(value=(CONFIG['theme'] == 'dark'))
         self.include_shorts = tk.BooleanVar(value=CONFIG.get('include_shorts', False))
         self.min_duration_seconds = tk.IntVar(value=CONFIG.get('min_video_duration', 120))
-        self.max_duration_seconds = tk.IntVar(value=CONFIG.get('max_video_duration', 3600)) # Default to 60 minutes (3600 seconds)
+        self.max_duration_seconds = tk.IntVar(value=CONFIG.get('max_video_duration', 3600))
         self.keep_original_title = tk.BooleanVar(value=CONFIG.get('keep_original_title', False))
         self.auto_quit_on_completion = tk.BooleanVar(value=CONFIG.get('auto_quit_on_completion', False))
         self.insert_dash_in_titles = tk.BooleanVar(value=CONFIG.get('insert_dash_in_titles', True))
@@ -135,23 +163,23 @@ class App(tk.Tk):
         current_font = (font_family, self.font_size)
         heading_font = (font_family, int(self.font_size * 1.2), "bold")
 
-        if self.is_dark_mode.get():
-            bg_color, fg_color, entry_bg, btn_bg, tree_bg, tree_heading_bg = "#2E2E2E", "#FFFFFF", "#3C3C3C", "#555555", "#3C3C3C", "#555555"
-            self.configure(bg=bg_color)
-            self.style.theme_use('clam')
-        else:
-            bg_color, fg_color, entry_bg, btn_bg, tree_bg, tree_heading_bg = "#F0F0F0", "#000000", "#FFFFFF", "#E1E1E1", "#FFFFFF", "#E1E1E1"
-            self.configure(bg=bg_color)
-            self.style.theme_use('default')
+        theme_name = 'dark' if self.is_dark_mode.get() else 'light'
+        colors = CONFIG['theme_colors'][theme_name]
+        
+        bg_color, fg_color, entry_bg, btn_bg, tree_bg, tree_heading_bg = \
+            colors['bg'], colors['fg'], colors['entry_bg'], colors['btn_bg'], colors['tree_bg'], colors['tree_heading_bg']
+        
+        self.configure(bg=bg_color)
+        self.style.theme_use('clam' if theme_name == 'dark' else 'default')
 
         self.style.configure('.', background=bg_color, foreground=fg_color, font=current_font)
         self.style.configure('TLabel', background=bg_color, foreground=fg_color)
         self.style.configure('TButton', background=btn_bg, foreground=fg_color, font=current_font)
-        self.style.map('TButton', background=[('active', '#6E6E6E' if self.is_dark_mode.get() else '#C0C0C0')])
+        self.style.map('TButton', background=[('active', colors['btn_active'])])
         self.style.configure('TEntry', fieldbackground=entry_bg, foreground=fg_color, insertcolor=fg_color)
         self.style.configure('Treeview', background=tree_bg, fieldbackground=tree_bg, foreground=fg_color, rowheight=self.font_size + 10)
         self.style.configure('Treeview.Heading', background=tree_heading_bg, foreground=fg_color, font=heading_font)
-        self.style.map('Treeview.Heading', background=[('active', '#6E6E6E' if self.is_dark_mode.get() else '#D0D0D0')])
+        self.style.map('Treeview.Heading', background=[('active', colors['tree_heading_active'])])
 
         if hasattr(self, 'prompt_text') and self.prompt_text.winfo_exists():
             self.prompt_text.config(bg=entry_bg, fg=fg_color, insertbackground=fg_color, font=current_font)
@@ -208,32 +236,27 @@ class App(tk.Tk):
         sliders_frame = ttk.Frame(control_frame)
         sliders_frame.pack(fill='x', pady=(5, 0))
 
-
-
-
-        # 슬라이더 프레임
-        sliders_frame = ttk.Frame(control_frame)
-        sliders_frame.pack(fill='x', pady=(5, 0))
-
         # 최소 영상 길이 설정 (슬라이더)
         min_duration_frame = ttk.Frame(sliders_frame)
         min_duration_frame.pack(side="left", padx=10)
         ttk.Label(min_duration_frame, text="최소 영상 길이 (분):").pack(side="left")
-        self.min_duration_slider = ttk.Scale(min_duration_frame , length=150,from_=0, to=60, orient="horizontal", variable=self.min_duration_seconds, command=self.update_min_duration_label)
+        min_slider_ranges = CONFIG['slider_ranges']['min_duration']
+        self.min_duration_slider = ttk.Scale(min_duration_frame , length=150,from_=min_slider_ranges['from'], to=min_slider_ranges['to'], orient="horizontal", variable=self.min_duration_seconds, command=self.update_min_duration_label)
         self.min_duration_slider.pack(side="left", padx=5)
-        self.min_duration_label = ttk.Label(min_duration_frame, text="2분 0초")
+        self.min_duration_label = ttk.Label(min_duration_frame, text="")
         self.min_duration_label.pack(side="left")
-        self.update_min_duration_label() # 초기값 설정
+        self.update_min_duration_label()
 
         # 최대 영상 길이 설정 (슬라이더)
         max_duration_frame = ttk.Frame(sliders_frame)
         max_duration_frame.pack(side="left", padx=10)
         ttk.Label(max_duration_frame, text="최대 영상 길이 (분):").pack(side="left")
-        self.max_duration_slider = ttk.Scale(max_duration_frame, length=500,from_=0, to=3000, orient="horizontal", variable=self.max_duration_seconds, command=self.update_max_duration_label)
+        max_slider_ranges = CONFIG['slider_ranges']['max_duration']
+        self.max_duration_slider = ttk.Scale(max_duration_frame, length=500,from_=max_slider_ranges['from'], to=max_slider_ranges['to'], orient="horizontal", variable=self.max_duration_seconds, command=self.update_max_duration_label)
         self.max_duration_slider.pack(side="left", padx=5)
-        self.max_duration_label = ttk.Label(max_duration_frame, text="20분 0초")
+        self.max_duration_label = ttk.Label(max_duration_frame, text="")
         self.max_duration_label.pack(side="left")
-        self.update_max_duration_label() # 초기값 설정
+        self.update_max_duration_label()
 
         # Gemini 모델 선택 라디오 버튼
         model_frame = ttk.Frame(control_frame)
@@ -314,7 +337,7 @@ class App(tk.Tk):
             if not self.channel_id:
                 raise ValueError("유효한 채널 ID를 찾을 수 없습니다.")
 
-            video_cache = youtube_helper.load_video_list_cache()
+            video_cache = youtube_helper.load_video_list_cache(CONFIG)
             cached_data = video_cache.get(self.channel_id)
 
             # 캐시 데이터 형식 확인 (오래된 캐시 형식일 경우 무효화)
@@ -334,7 +357,7 @@ class App(tk.Tk):
                 )
                 self.all_videos = videos_batch
                 # 원본 비디오 목록을 캐시에 저장
-                youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
+                youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token, CONFIG)
             
             # 필터링과 중복 제거를 적용할 원본 데이터 복사
             videos_to_process = list(self.all_videos)
@@ -356,7 +379,7 @@ class App(tk.Tk):
                 final_videos = videos_to_process
 
             # 필터링 및 'is_processed' 플래그 적용
-            processed_log = youtube_helper.load_processed_videos_log()
+            processed_log = youtube_helper.load_processed_videos_log(CONFIG)
             filtered_videos = []
             for video in final_videos: # final_videos를 사용
                 if not self.include_shorts.get() and video['title'].strip().endswith('#비밀치트키'):
@@ -391,10 +414,11 @@ class App(tk.Tk):
         self.tree = ttk.Treeview(scene2, columns=cols, show="headings")
         self.tree.heading("제목", text="영상 제목")
         self.tree.heading("영상 길이", text="영상 길이")
-        self.tree.column("제목", width=600)
-        self.tree.column("영상 길이", width=100, anchor='center')
+        tree_widths = CONFIG.get("treeview_widths", {"title": 600, "duration": 100})
+        self.tree.column("제목", width=tree_widths['title'])
+        self.tree.column("영상 길이", width=tree_widths['duration'], anchor='center')
         
-        processed_color = "#5DADE2"
+        processed_color = CONFIG['theme_colors'].get('processed', '#5DADE2')
         self.tree.tag_configure('processed', foreground=processed_color)
         
         self.tree.pack(fill="both", expand=True, pady=10)
@@ -446,7 +470,7 @@ class App(tk.Tk):
             self.all_videos.extend(videos_batch)
             
             # 업데이트된 전체 원본 목록을 캐시에 저장
-            youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
+            youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token, CONFIG)
 
             # 필터링과 중복 제거를 적용할 데이터 복사
             videos_to_process = list(self.all_videos)
@@ -466,7 +490,7 @@ class App(tk.Tk):
                 final_videos_after_load_more = videos_to_process
 
             # 필터링 및 'is_processed' 플래그 추가
-            processed_log = youtube_helper.load_processed_videos_log()
+            processed_log = youtube_helper.load_processed_videos_log(CONFIG)
             filtered_videos_for_all = []
             for video in final_videos_after_load_more:
                 if not self.include_shorts.get() and video['title'].strip().endswith('#비밀치트키'):
@@ -557,10 +581,10 @@ class App(tk.Tk):
                             continue # 오류가 있으면 노트 저장을 건너뜀
 
                         self.q.put(("log", f"  - '{video_title}' 내용 가공 완료. 노트 저장 중..."))
-                        file_helper.save_as_obsidian_note(self.obsidian_path, processed_content, self.keep_original_title.get(), video_title, self.insert_dash_in_titles.get())
+                        file_helper.save_as_obsidian_note(self.obsidian_path, processed_content, self.keep_original_title.get(), video_title, self.insert_dash_in_titles.get(), CONFIG)
                         
                         # 성공적으로 저장된 비디오를 로그에 기록
-                        youtube_helper.log_processed_video(video_id)
+                        youtube_helper.log_processed_video(video_id, CONFIG)
                         
                         self.q.put(("log", f"  - ✓ 완료: '{video_title}' 노트 생성 완료"))
                     else:

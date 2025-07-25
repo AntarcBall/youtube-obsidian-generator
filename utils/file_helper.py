@@ -43,22 +43,25 @@ def _sanitize_filename(title, insert_dash):
     filename = (filename[:200]) if len(filename) > 200 else filename
     return filename
 
-def generate_filename_from_content(content, insert_dash):
+def generate_filename_from_content(content, insert_dash, config):
     """
     내용의 첫 줄을 기반으로 파일명을 생성합니다.
     """
     if not content:
-        return "untitled"
+        return config.get("default_filename", "untitled")
         
     # 내용의 첫 줄을 제목으로 가정
     first_line = content.strip().split('\n')[0]
     return _sanitize_filename(first_line, insert_dash)
 
-def save_as_obsidian_note(path, content, keep_original_title=False, original_title="", insert_dash=True):
+def save_as_obsidian_note(path, content, keep_original_title=False, original_title="", insert_dash=True, config=None):
     """
     지정된 경로에 가공된 내용을 마크다운 파일로 저장합니다.
     파일 이름은 내용 또는 원본 제목에서 생성됩니다.
     """
+    if config is None:
+        config = {}
+        
     if not os.path.isdir(path):
         os.makedirs(path)
         print(f"'{path}' 폴더를 생성했습니다.")
@@ -68,10 +71,10 @@ def save_as_obsidian_note(path, content, keep_original_title=False, original_tit
         base_filename = _sanitize_filename(original_title, insert_dash)
     
     if not base_filename:
-        base_filename = generate_filename_from_content(content, insert_dash)
+        base_filename = generate_filename_from_content(content, insert_dash, config)
 
     if not base_filename:
-        base_filename = "untitled"
+        base_filename = config.get("default_filename", "untitled")
 
     filename = f"{base_filename}.md"
     file_path = os.path.join(path, filename)
