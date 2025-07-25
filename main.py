@@ -40,6 +40,10 @@ def load_config(filepath="config.json"):
             "min_duration": {"from": 0, "to": 60},
             "max_duration": {"from": 0, "to": 3000}
         },
+        "slider_lengths": {
+            "min_duration": 150,
+            "max_duration": 500
+        },
         "treeview_widths": {
             "title": 600,
             "duration": 100
@@ -241,7 +245,8 @@ class App(tk.Tk):
         min_duration_frame.pack(side="left", padx=10)
         ttk.Label(min_duration_frame, text="최소 영상 길이 (분):").pack(side="left")
         min_slider_ranges = CONFIG['slider_ranges']['min_duration']
-        self.min_duration_slider = ttk.Scale(min_duration_frame , length=150,from_=min_slider_ranges['from'], to=min_slider_ranges['to'], orient="horizontal", variable=self.min_duration_seconds, command=self.update_min_duration_label)
+        min_slider_length = CONFIG['slider_lengths']['min_duration']
+        self.min_duration_slider = ttk.Scale(min_duration_frame , length=min_slider_length, from_=min_slider_ranges['from'], to=min_slider_ranges['to'], orient="horizontal", variable=self.min_duration_seconds, command=self.update_min_duration_label)
         self.min_duration_slider.pack(side="left", padx=5)
         self.min_duration_label = ttk.Label(min_duration_frame, text="")
         self.min_duration_label.pack(side="left")
@@ -252,7 +257,8 @@ class App(tk.Tk):
         max_duration_frame.pack(side="left", padx=10)
         ttk.Label(max_duration_frame, text="최대 영상 길이 (분):").pack(side="left")
         max_slider_ranges = CONFIG['slider_ranges']['max_duration']
-        self.max_duration_slider = ttk.Scale(max_duration_frame, length=500,from_=max_slider_ranges['from'], to=max_slider_ranges['to'], orient="horizontal", variable=self.max_duration_seconds, command=self.update_max_duration_label)
+        max_slider_length = CONFIG['slider_lengths']['max_duration']
+        self.max_duration_slider = ttk.Scale(max_duration_frame, length=max_slider_length, from_=max_slider_ranges['from'], to=max_slider_ranges['to'], orient="horizontal", variable=self.max_duration_seconds, command=self.update_max_duration_label)
         self.max_duration_slider.pack(side="left", padx=5)
         self.max_duration_label = ttk.Label(max_duration_frame, text="")
         self.max_duration_label.pack(side="left")

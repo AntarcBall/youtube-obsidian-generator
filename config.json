@@ -15,7 +15,7 @@
     "auto_quit_on_completion": false,
     "insert_dash_in_titles": false,
     "ignore_shorter_duplicates": true,
-    "window_geometry": "1224x568",
+    "window_geometry": "1024x568",
     "slider_ranges": {
         "min_duration": {
             "from": 0,
@@ -25,6 +25,10 @@
             "from": 0,
             "to": 3000
         }
+    },
+    "slider_lengths": {
+        "min_duration": 150,
+        "max_duration": 500
     },
     "treeview_widths": {
         "title": 600,
