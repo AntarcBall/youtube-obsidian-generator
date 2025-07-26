@@ -176,6 +176,9 @@ class App(tk.Tk):
         self.current_scene = new_scene_creator(*args)
         self.update_styles()
 
+    def go_to_scene1(self):
+        self.switch_scene(self.create_scene1)
+
     def create_scene1(self):
         scene1 = ttk.Frame(self, padding=(20, 10))
         scene1.pack(fill="both", expand=True)
@@ -441,6 +444,9 @@ class App(tk.Tk):
 
         button_frame = ttk.Frame(scene2)
         button_frame.pack(fill='x', pady=10)
+
+        self.prev_btn = ttk.Button(button_frame, text="이전", command=self.go_to_scene1)
+        self.prev_btn.pack(side="left", ipady=5, padx=(0, 5))
 
         self.confirm_btn2 = ttk.Button(button_frame, text="선택한 영상 분석 시작", command=self.start_processing)
         self.confirm_btn2.pack(side="left", expand=True, fill="x", ipady=5, padx=(0, 5))
