@@ -9493,303 +9493,619 @@
                 "id": "wt6C2K8h5R4",
                 "title": "미국 연준 소속 이코노미스트 논문 발표... AI가 전기 발명에 버금가는 '범용 기술'인 이유",
                 "duration": "13:19",
-                "total_seconds": 799
+                "total_seconds": 799,
+                "is_processed": false,
+                "cosine_similarity": 0.86
             },
             {
                 "id": "Yquv_f59XGg",
                 "title": "공랭식은 이제 한계! GPU 엄청난 열... 칩 단위 수랭식 냉각부터 AI 데이터센터까지,NVIDIA GPU를 위한 냉각 솔루션이 AI 시대 핵심이 된 이유 [엠키스코어x안될공학]",
                 "duration": "08:24",
-                "total_seconds": 504
+                "total_seconds": 504,
+                "is_processed": false,
+                "cosine_similarity": 0.81
             },
             {
                 "id": "TBaYqIdKnaw",
                 "title": "미국 백악관, AI 액션플랜 발표.. 여기서 엄청난 투자와 정책이 쏟아집니다 |  반도체, 신약개발, 인프라, 전력망, 중국, 러시아, 동맹국까지 모든 것을 통제",
                 "duration": "12:50",
-                "total_seconds": 770
+                "total_seconds": 770,
+                "is_processed": false,
+                "cosine_similarity": 0.85
             },
             {
                 "id": "Rz9I4j2pd5w",
                 "title": "중국 오픈소스AI 또 공습… 성능까지 다 압도, 미국 빅테크 위기인가, 우리나라는? | 1조 파라미터 Kimi K2 압도한 알리바바 Qwen3 최신 업데이트, 중국발 AI 대전쟁",
                 "duration": "14:34",
-                "total_seconds": 874
+                "total_seconds": 874,
+                "is_processed": false,
+                "cosine_similarity": 0.8
             },
             {
                 "id": "EV2-IszTORc",
                 "title": "애플 공식 출시, 사이버펑크 2077 직접 해보니... 애플이 게임 시장에 들어오는 이유 알겠네요 | 에어팟 공간 음향 | 게임 포팅 툴킷 | MetalFX | 레이트레이싱",
                 "duration": "17:52",
-                "total_seconds": 1072
+                "total_seconds": 1072,
+                "is_processed": false,
+                "cosine_similarity": 0.79
             },
             {
                 "id": "EbN_DWM3DJc",
                 "title": "OpenAI, 구글, 클로드 다 마찬가지... 입력 길이 길어지면 생각보다 훨씬 더 성능 떨어진다 - 어떻게 대응해야 하나 | 컨텍스트 엔지니어링",
                 "duration": "08:00",
-                "total_seconds": 480
+                "total_seconds": 480,
+                "is_processed": false,
+                "cosine_similarity": 0.86
             },
             {
                 "id": "l04j-n1Yung",
                 "title": "메타 CEO 마크 저커버그, AI 전쟁 인재영입의 핵심은  돈이 아니라 GPU다 | 애플 AI 리더, OpenAI 정형원 박사도...",
                 "duration": "15:16",
-                "total_seconds": 916
+                "total_seconds": 916,
+                "is_processed": false,
+                "cosine_similarity": 0.79
             },
             {
                 "id": "pKS7UaxzSZ8",
                 "title": "OpenAI, 챗GPT 에이전트 전격 출시! 이제 진짜 당신의 컴퓨터, 구글 드라이브 다 활용해서 컴퓨터 전체를 제어한다, 이미 있던 Agentic AI인데도 놀라운 이유",
                 "duration": "10:28",
-                "total_seconds": 628
-            },
-            {
-                "id": "Ly07Ve861dc",
-                "title": "보고서, 아직도 직접 만든다고? 자료검색부터 그래프 작성까지 한방에! [Skywork x 안될공학]",
-                "duration": "00:51",
-                "total_seconds": 51
+                "total_seconds": 628,
+                "is_processed": false,
+                "cosine_similarity": 0.81
             },
             {
                 "id": "oiwtzSTozIY",
                 "title": "반유대주의 사과 직후에... 일론 머스크 Grok4, 최고 모델 Heavy에서 히틀러 찬양 넘어 자신을 히틀러로 인식 | LLM 이유",
                 "duration": "11:51",
-                "total_seconds": 711
+                "total_seconds": 711,
+                "is_processed": false,
+                "cosine_similarity": 0.78
             },
             {
                 "id": "WD39DvTsFNw",
                 "title": "일론 머스크, 작정하고 만들었다... 현존 최강 AI '그록 4' | 다음은 GPU 100만개다",
                 "duration": "12:57",
-                "total_seconds": 777
+                "total_seconds": 777,
+                "is_processed": false,
+                "cosine_similarity": 0.83
             },
             {
                 "id": "P82kV2g8FUw",
                 "title": "OpenAI 곧 망할 거라는... WindSurf 인수 불발, Grok4 생각보다 좋아| Microsoft 불화 | 오픈소스 연기 발표까지",
                 "duration": "06:44",
-                "total_seconds": 404
+                "total_seconds": 404,
+                "is_processed": false,
+                "cosine_similarity": 0.79
             },
             {
                 "id": "vtmTCuG_98g",
                 "title": "제2의 딥시크! 중국, 성능 미친 '1조개' 초거대 AI 모델 오픈소스 등장 | NVIDIA AI PC, 쏘캠 더욱 주목 | Moonshot AI 2년만에 오픈소스 시장 주도",
                 "duration": "12:36",
-                "total_seconds": 756
+                "total_seconds": 756,
+                "is_processed": false,
+                "cosine_similarity": 0.8
             },
             {
                 "id": "d5TeJWRUZMM",
                 "title": "역대급 호평! 갤럭시 Z폴드7, '플립7이  포기한 6가지, 기술적 이유 | 화웨이 오포는 이미 적용했던 기술?",
                 "duration": "16:07",
-                "total_seconds": 967
+                "total_seconds": 967,
+                "is_processed": false,
+                "cosine_similarity": 0.79
             },
             {
                 "id": "4AJojWVl_ec",
                 "title": "세계 최고의 오디오 연구소 다녀왔습니다 | 마이크, 스피커 달린 모든 애플 기기, 이 곳을 거쳐간다 | 애플 ‘오디오랩‘ 에 숨겨진 네 가지 비밀 방",
                 "duration": "11:26",
-                "total_seconds": 686
+                "total_seconds": 686,
+                "is_processed": false,
+                "cosine_similarity": 0.83
             },
             {
                 "id": "HkEubhROmcE",
                 "title": "AI, 사진 한 장으로 수명까지 | 관상, 진짜 과학임이 밝혀지나...!  | AI 가 말하는 오래사는 직업",
                 "duration": "12:41",
-                "total_seconds": 761
-            },
-            {
-                "id": "ulOYNkJZ5Fs",
-                "title": "HBM 먹는 자, 메모리 넘어 반도체 전체 1등된다... 중국 마저 DDR4 조기 생산 중단, 기존 DRAM 전략까지 싹 바뀐 현 상황",
-                "duration": "13:30",
-                "total_seconds": 810
-            },
-            {
-                "id": "17MPKGol5kM",
-                "title": "주구장창 늘어나는 이 어마어마한 폴더들 각각 커스터마이징한다고?",
-                "duration": "00:36",
-                "total_seconds": 36
+                "total_seconds": 761,
+                "is_processed": false,
+                "cosine_similarity": 0.86
             },
             {
                 "id": "BTZNz-aEwA4",
                 "title": "'초거대 배터리'가 온다... AI 전기 부족 시대, 끊기지 않는 전기 위한 ’그리드 규모 에너지 저장’ 기술의 모든 것 (feat. 테슬라 메가팩)",
                 "duration": "17:18",
-                "total_seconds": 1038
-            },
-            {
-                "id": "5CTW89qTUx8",
-                "title": "이게 애플의 감성인가?! 아이폰 리퀴드글래스 디자인 폼 미쳤다...",
-                "duration": "00:36",
-                "total_seconds": 36
-            },
-            {
-                "id": "BsSjSw3qlVw",
-                "title": "아이패드를 맥북처럼, 아니 그보다 더 편하게! 창관리와 바탕화면 등 개편!",
-                "duration": "00:55",
-                "total_seconds": 55
-            },
-            {
-                "id": "geZ0aCzKDIY",
-                "title": "작성한 코드가 엉망이지만 의도한 일을 하긴 할 때",
-                "duration": "00:10",
-                "total_seconds": 10
+                "total_seconds": 1038,
+                "is_processed": false,
+                "cosine_similarity": 0.81
             },
             {
                 "id": "LVfrRKzfrLk",
                 "title": "사실상 발전소다... 예쁜 건 덤, 건물 전체가 숨쉬는, 구글 미래 캠퍼스 '베이뷰' 심층 분석",
                 "duration": "12:15",
-                "total_seconds": 735
+                "total_seconds": 735,
+                "is_processed": false,
+                "cosine_similarity": 0.84
             },
             {
                 "id": "lcjIVXb-aLU",
                 "title": "SNS에서 난리 난 역대급 AI.... 데이터 찾고 그래프 그려주는 미친 퀄리티 PPT, 문서를 5분 만에 [Skywork x 안될공학]",
                 "duration": "17:42",
-                "total_seconds": 1062
+                "total_seconds": 1062,
+                "is_processed": false,
+                "cosine_similarity": 0.79
             },
             {
                 "id": "rxDaUuMHphw",
                 "title": "AI가 기업, 개인 생산성까지 올렸다 | PwC 최신 보고서, 일자리는 물론 월급까지 모든 산업에서 고르게 올랐다!",
                 "duration": "08:04",
-                "total_seconds": 484
-            },
-            {
-                "id": "o_DDhR5rTgI",
-                "title": "애플 비전 프로, ‘직접 써보니’ 이번에 진짜 더 미쳤... 왜 XR이 아닌 ‘공간 컴퓨터’인지 확실히 보여줌 | WWDC25 최신 업데이트(위젯 공간사진, 페르소나, 플스)",
-                "duration": "14:11",
-                "total_seconds": 851
+                "total_seconds": 484,
+                "is_processed": false,
+                "cosine_similarity": 0.83
             },
             {
                 "id": "afk1CguQhqk",
                 "title": "DRAM도 다 같은 DRAM이 아니다... 성능, 전력, 대역폭 등 다양한 스펙에 따라 서로 다른 기술 | DDR, LPDDR, HBM과 LLW IO",
                 "duration": "14:05",
-                "total_seconds": 845
+                "total_seconds": 845,
+                "is_processed": false,
+                "cosine_similarity": 0.78
             },
             {
                 "id": "savY-Hz24ow",
                 "title": "스탠퍼드 논문이 밝혔다... AI 투자 41% 무쓸모.., 인간 대체? 가치가 낮아지는 직업 | 자동화, 노동자 입장과 AI 전문가 입장이 다르다",
                 "duration": "12:31",
-                "total_seconds": 751
+                "total_seconds": 751,
+                "is_processed": false,
+                "cosine_similarity": 0.84
             },
             {
                 "id": "xoNKed_w3P4",
                 "title": "구글이 해냈다... 태풍, 사이클론 15일 전 예측, 경로까지 정확하게 | 예측 판 바꾼 새로운 AI 모델, 연구용으로도 공개",
                 "duration": "13:37",
-                "total_seconds": 817
+                "total_seconds": 817,
+                "is_processed": false,
+                "cosine_similarity": 0.84
             },
             {
                 "id": "qVI0c6oU974",
                 "title": "팀쿡 앞 시연, 2년 연속 수상! 애플이 선택한 24세 천재 개발자 한가온 |  앱 개발과 Accessibility, 애플 디펠로퍼 아카데미",
                 "duration": "17:56",
-                "total_seconds": 1076
+                "total_seconds": 1076,
+                "is_processed": false,
+                "cosine_similarity": 0.8
             },
             {
                 "id": "ogPYg8d9Zc0",
                 "title": "20주년 아이폰 신규 하드웨어 예고편… 애플 새로운 OS 디자인 Liquid Glass 가 기대되는 이유",
                 "duration": "12:33",
-                "total_seconds": 753
+                "total_seconds": 753,
+                "is_processed": false,
+                "cosine_similarity": 0.78
             },
             {
                 "id": "1kPVTY0M4hE",
                 "title": "코딩할 줄 몰라도 다 된다... AI가 연 '바이브 코딩'과 로우코드/노코드 부상, 진짜 개발자는 없어지나?",
                 "duration": "16:48",
-                "total_seconds": 1008
+                "total_seconds": 1008,
+                "is_processed": false,
+                "cosine_similarity": 0.84
             },
             {
                 "id": "4DI3Ef1TN_c",
                 "title": "애플 제품 몽땅 다 바뀐다… WWDC25 키노트 완벽 정리: 아이폰, 맥북부터 비전 프로까지, ‘리퀴드 글래스’ 디자인과 ‘애플 인텔리전스’",
                 "duration": "18:56",
-                "total_seconds": 1136
+                "total_seconds": 1136,
+                "is_processed": false,
+                "cosine_similarity": 0.78
             },
             {
                 "id": "o8ulKtF43oQ",
                 "title": "Figure 1시간 동작 영상 공개... 물류 로봇 Helix, 무엇이 발전되었나 | 테슬라 옵티머스 비교",
                 "duration": "10:44",
-                "total_seconds": 644
+                "total_seconds": 644,
+                "is_processed": false,
+                "cosine_similarity": 0.84
             },
             {
                 "id": "nFx1Z8DzqWY",
                 "title": "GPU로 돈 쓸어담던 NVIDIA… “이제 AI는 작은 모델” | SLM이 에어전틱 AI에서 강력할 수 밖에 없는 이유 | 온디바이스AI 시대 열린다",
                 "duration": "10:45",
-                "total_seconds": 645
+                "total_seconds": 645,
+                "is_processed": false,
+                "cosine_similarity": 0.8
             },
             {
                 "id": "Uc6QonYSjps",
                 "title": "미국 주식 투자자 주목... 재무제표, 기업보고서 분석 AI 가 끝냈다 | 퍼플렉시티, 미국 SEC 정보 그대로 가져와서 분석하는 서비스 시작 ㄷㄷㄷ",
                 "duration": "11:50",
-                "total_seconds": 710
+                "total_seconds": 710,
+                "is_processed": false,
+                "cosine_similarity": 0.84
             },
             {
                 "id": "8AxKZTVjVaE",
                 "title": "340쪽 분량 역대급 AI 보고서 등장... AI 분야 산업, 빅테크 경쟁 상황, SpaceX, 휴머노이드, 자율주행 이해를 위한 핵심 그래프 20개 뽑아봤습니다.",
                 "duration": "13:54",
-                "total_seconds": 834
+                "total_seconds": 834,
+                "is_processed": false,
+                "cosine_similarity": 0.8
             },
             {
                 "id": "JdcSB5nM-eY",
                 "title": "충격적인 논문 AI 커뮤니티 흔들다... AI는 모두 같은 구조? 서로 다른 임베딩 모델에도 개인정보까지 추출할 수 있음을 증명한 무시무시한 논문",
                 "duration": "13:34",
-                "total_seconds": 814
-            },
-            {
-                "id": "iNHjU3M-YoA",
-                "title": "화웨이... NVIDIA보다 빠른 AI 서버 가졌다는 분석 나와",
-                "duration": "00:59",
-                "total_seconds": 59
+                "total_seconds": 814,
+                "is_processed": false,
+                "cosine_similarity": 0.85
             },
             {
                 "id": "rMh0FWtG_tk",
                 "title": "2026년 옵티머스 태우고 화성으로… SpaceX, 구체적 계획 발표 | 화성으로 가는 가장 빠른 길은 26개월마다 | 신형 스타십, 재활용 기술, 신형 랩터 엔진 |",
                 "duration": "15:55",
-                "total_seconds": 955
+                "total_seconds": 955,
+                "is_processed": false,
+                "cosine_similarity": 0.79
             },
             {
                 "id": "DhnVAQRI7w0",
                 "title": "샤오미 최초 모바일 자체칩 Xring O1 공개! 퀄컴 잡을 비밀병기 될까?",
                 "duration": "11:46",
-                "total_seconds": 706
+                "total_seconds": 706,
+                "is_processed": false,
+                "cosine_similarity": 0.78
             },
             {
                 "id": "bBmCY5xvqPg",
                 "title": "구글 글래스 제대로 부활했네요...  XR 글래스 직접 착용, 핵심 기술은 이것 | 메타글래스와 다른 점 | Gemini AI 통합 안드로이드XR | LCOS x 회절 도파관",
                 "duration": "19:18",
-                "total_seconds": 1158
+                "total_seconds": 1158,
+                "is_processed": false,
+                "cosine_similarity": 0.81
             },
             {
                 "id": "IMuClNioBlI",
                 "title": "AI 기본 개념부터 미래 트렌드까지... 비전공자도 이해하기 쉬운 AI 관련 필수지식, 기술 현황 및 인사이트 총정리 [비즈니스북스x안될공학]",
                 "duration": "14:39",
-                "total_seconds": 879
+                "total_seconds": 879,
+                "is_processed": false,
+                "cosine_similarity": 0.86
             },
             {
                 "id": "LxuLtY_wWqU",
                 "title": "구글 안드로이드XR 출격, 프로젝트 무한 써보니 이게 달랐다... 애플 비전 프로보다 나은 건 바로?!",
                 "duration": "13:10",
-                "total_seconds": 790
+                "total_seconds": 790,
+                "is_processed": false,
+                "cosine_similarity": 0.8
             },
             {
                 "id": "sPoJIpoKV8g",
                 "title": "Claude 4 엔지니어 불륜 폭로 협박… 언론 법원 메일, AI 의식 나타나나 | 성능 높을수록 속임수 커져",
                 "duration": "06:11",
-                "total_seconds": 371
+                "total_seconds": 371,
+                "is_processed": false,
+                "cosine_similarity": 0.82
             },
             {
                 "id": "j0uyWncFcn4",
                 "title": "미쳐버린 구글 영상AI... 실제 사례 모음 | Veo3 | 립싱크, 대사, 랩, 효과음, 배경음",
                 "duration": "08:51",
-                "total_seconds": 531
+                "total_seconds": 531,
+                "is_processed": false,
+                "cosine_similarity": 0.85
             },
             {
                 "id": "xemQowx3a-w",
                 "title": "구글 정말 미쳤습니다… 구글 I/O 2025 키노트 | 직접 보고 체험 후 총정리 | Gemini, Deep Think 출시죄다 1등 | 구글글래스 부활 | 에이전트AI의 끝",
                 "duration": "23:23",
-                "total_seconds": 1403
+                "total_seconds": 1403,
+                "is_processed": false,
+                "cosine_similarity": 0.79
             },
             {
                 "id": "pEirIzbMf_I",
                 "title": "어떤 AI 선택할지 고민 필요 없음... 무료, 알아서 모델 선택, 말까지 걸어 오고 돈까지 번다 | 뤼튼 3.0 신규 AI 서비스가 예사롭지 않은 이유[뤼튼테크놀로지스x안될공학]",
                 "duration": "13:55",
-                "total_seconds": 835
+                "total_seconds": 835,
+                "is_processed": false,
+                "cosine_similarity": 0.86
             },
             {
-                "id": "MnT1UoS8ylk",
-                "title": "SKT 유출 사건, 1차 발표 번복했다… 단말기 정보인 IMEI 까지 유출되었을 수도 | 현 상황이 심각한 이유 | 그래도 문제가 안된다?",
-                "duration": "11:13",
-                "total_seconds": 673
+                "id": "9JozFHGGhmw",
+                "title": "AI 인프라 핵심 데이터센터... 전력 폭증 관리, 정전부터 냉각 솔루션까지, 데이터센터에 필요한 진짜 핵심 기술 정리 [슈나이더 일렉트릭x안될공학]",
+                "duration": "16:39",
+                "total_seconds": 999,
+                "is_processed": false,
+                "cosine_similarity": 0.86
             },
             {
-                "id": "VJEds11brEo",
-                "title": "인텔 CFO: 18A 고객사, 떠났다... RibbonFET, PowerVia 장착 18A, 결국 tsmc 인가 | 2027년 손익분기점 달성 위기",
-                "duration": "12:36",
-                "total_seconds": 756
+                "id": "50XU1f0GRag",
+                "title": "삼성이 만드는데 갤럭시와는 다르다...? 폴더블 아이폰, 루머 정리 및 기술 분석 | 액체금속 힌지, 두께 얇은 인셀 터치, 주름 없음, 자가 치유 디스플레이까지...?",
+                "duration": "16:11",
+                "total_seconds": 971,
+                "is_processed": false,
+                "cosine_similarity": 0.83
+            },
+            {
+                "id": "CURQxhI8hsQ",
+                "title": "데이터 필요 없다! 스스로 학습하는 역대급 AI, 기존 최고 모델 이겼다 | 트랜스포머 뒤를 이을 기술인가…  | Absolute Zero Reasoner | 학습 데이터 고갈",
+                "duration": "16:41",
+                "total_seconds": 1001,
+                "is_processed": false,
+                "cosine_similarity": 0.83
+            },
+            {
+                "id": "TMERHWbb8IU",
+                "title": "지금 바로 무료 신청! 검색 답변을 그냥 웹페이지로 만들어 대답하는 AI 에이전틱 브라우저 등장 | 구글, MS, 애플 다 뒤집는다 | SNS 자동화 | Fellou AI",
+                "duration": "07:33",
+                "total_seconds": 453,
+                "is_processed": false,
+                "cosine_similarity": 0.84
+            },
+            {
+                "id": "rpNDuHShKnw",
+                "title": "QLED TV, 정말 다 같을까? Real QLED의 조건 (No 카드뮴, 보안, AI 화질) [안될공학x삼성전자]",
+                "duration": "15:28",
+                "total_seconds": 928,
+                "is_processed": false,
+                "cosine_similarity": 0.78
+            },
+            {
+                "id": "dCYHIXRqlhg",
+                "title": "초소형에서 고성능까지, 반도체 혁신의 결정판! 어드밴스드 패키징 기술 정리 (유리기판, 3D 패키징, MR-MUF, MR-NCF, TSV, CoWoS, FO-WLP)",
+                "duration": "08:58",
+                "total_seconds": 538,
+                "is_processed": false,
+                "cosine_similarity": 0.81
+            },
+            {
+                "id": "qwEIPWEpS9I",
+                "title": "일론머스크 xAI 보안 참사… 미공개 LLM 60개 유출 2개월  | SpaceX, Tesla, 미국 정부 접근 열렸나?",
+                "duration": "09:50",
+                "total_seconds": 590,
+                "is_processed": false,
+                "cosine_similarity": 0.78
+            },
+            {
+                "id": "wrRLpQftchw",
+                "title": "요즘 구글 진짜 미쳤네… 공부, 업무 효율 10배, 아는 사람만 쓰던 무료 대박 기능, 노트북LM, 한국어 팟캐스트까지 지원합니다 | 웹사이트, PDF, 유튜브 모아 요약, 음성",
+                "duration": "09:28",
+                "total_seconds": 568,
+                "is_processed": false,
+                "cosine_similarity": 0.82
+            },
+            {
+                "id": "AfQ-_zqmvC8",
+                "title": "저도 당했습니다... 지금 바로 확인하고 바꾸세요 | Microsoft 전세계 로그인 시도 | SKT 유심도 그렇지만 각자 대비해야 | 2차 인증, 이메일 계정, 비밀번호 변경",
+                "duration": "03:55",
+                "total_seconds": 235,
+                "is_processed": false,
+                "cosine_similarity": 0.81
+            },
+            {
+                "id": "emeZcI5KywU",
+                "title": "“유심 교체하면 안돼!” 중국산 유심, 백도어가 가능한가 | 암호화, 유심 표준 넘어 악성코드로 해킹 당할 가능성",
+                "duration": "12:07",
+                "total_seconds": 727,
+                "is_processed": false,
+                "cosine_similarity": 0.81
+            },
+            {
+                "id": "XeGAr0XmY90",
+                "title": "초고정밀 해상도 위성에 AI 기술 적용... Airbus 가 항공위성산업에 AI를 적용하는 이유 [Airbus x 안될공학]",
+                "duration": "10:22",
+                "total_seconds": 622,
+                "is_processed": false,
+                "cosine_similarity": 0.83
+            },
+            {
+                "id": "zMKQp4LFUBo",
+                "title": "최대 270만 페이지 털렸다… SKT, MBC 단독 ￼속보  | 가짜 기지국 만들어질 위험까지? 유심 교체해도 의미 없다 - 팩트체크",
+                "duration": "12:31",
+                "total_seconds": 751,
+                "is_processed": false,
+                "cosine_similarity": 0.78
+            },
+            {
+                "id": "KH9YCkJZuW8",
+                "title": "친환경 연료, 3D 프린팅, 미래 배터리까지! 차세대 비행기를 만드는 놀라운 기술들 [에어버스x안될공학]",
+                "duration": "10:03",
+                "total_seconds": 603,
+                "is_processed": false,
+                "cosine_similarity": 0.82
+            },
+            {
+                "id": "RpzO7uKx-M0",
+                "title": "중국 해커 그룹이 주로 사용한 방식… 4년 전부터 이미 경고했었다 | SKT 해킹에서 사용된 방식, 과연 통신3사 모두 안전할까",
+                "duration": "13:01",
+                "total_seconds": 781,
+                "is_processed": false,
+                "cosine_similarity": 0.82
+            },
+            {
+                "id": "u9EbGpIwsxA",
+                "title": "더 무서운 건 모든 배터리에 적용 가능?! 세계 1위 배터리 기업 CATL 나트륨 이온 배터리 2세대 분석해보니.. 장단점 넘어 무음극배터리기술, 모든 배터리 에너지 밀도 높인다",
+                "duration": "18:46",
+                "total_seconds": 1126,
+                "is_processed": false,
+                "cosine_similarity": 0.79
+            },
+            {
+                "id": "Sekecd_B8ic",
+                "title": "딥시크 R1의 진실과 과장 I 딥시크 사태... 그래서 진실, 거짓은 무엇? HBM, GPU | AI 패권 경쟁",
+                "duration": "15:13",
+                "total_seconds": 913,
+                "is_processed": false,
+                "cosine_similarity": 0.79
+            },
+            {
+                "id": "k5Nqg1L3mvY",
+                "title": "127m 빌딩 높이 풍력발전기, 빨대처럼 접혔다... 원인은 '좌굴'? | 코로나 후판 물량 부족 관련성 | 시공 결함과 재료 문제 추적",
+                "duration": "06:11",
+                "total_seconds": 371,
+                "is_processed": false,
+                "cosine_similarity": 0.81
+            },
+            {
+                "id": "cm4yMVvZ4z4",
+                "title": "OpenAI 알고 있었다... o1보다 헛소리(환각) 2-3배 o3, o4-mini 아직 원인 파악 못해 | Reasoning 추론 모델의 한계",
+                "duration": "09:05",
+                "total_seconds": 545,
+                "is_processed": false,
+                "cosine_similarity": 0.83
+            },
+            {
+                "id": "fh_hDo6imko",
+                "title": "AI, 인간을 대체하는 것이 아니다... AI x 인간 지능 = 공동 지능 | AI 시대 살아남기 위한 가장 실용적인 방법은 무엇인가 [안될공학 x 듀얼브레인]",
+                "duration": "15:40",
+                "total_seconds": 940,
+                "is_processed": false,
+                "cosine_similarity": 0.86
+            },
+            {
+                "id": "Moma9dHM1WI",
+                "title": "OpenAI SORA 압살... 일반 구독자에게 공개중  | 구글 영상 AI Veo2 | 한국 포함 다양한 영상, 물리 세계 이해 압도적",
+                "duration": "09:52",
+                "total_seconds": 592,
+                "is_processed": false,
+                "cosine_similarity": 0.82
+            },
+            {
+                "id": "fHtr0fbHgvo",
+                "title": "구글, NVIDIA 버리고 AI 칩 시장까지... 9년 동안 설계 빛 보다 | 7세대 TPU Ironwood 발표 | 가장 빠른 슈퍼 컴퓨터보다 24배",
+                "duration": "13:56",
+                "total_seconds": 836,
+                "is_processed": false,
+                "cosine_similarity": 0.78
+            },
+            {
+                "id": "SrXu2B4GWXs",
+                "title": "구글AI 소름... 이제 돌고래와 대화합니다 ㄷㄷ 픽셀 스마트폰에서 OnDevice AI로 가능 | 소리해석뿐만 아니라 대화 실험도",
+                "duration": "11:22",
+                "total_seconds": 682,
+                "is_processed": false,
+                "cosine_similarity": 0.83
+            },
+            {
+                "id": "MHyaDHWkA2Y",
+                "title": "구글 미쳤네요... 진짜 올해는 AI Agent 시대다 | MCP는 장난 수준 | MS, Salesforce 다 엮는 Agent2Agent (A2A) 프로토콜 공개",
+                "duration": "09:19",
+                "total_seconds": 559,
+                "is_processed": false,
+                "cosine_similarity": 0.78
+            },
+            {
+                "id": "XDudc_tJXkw",
+                "title": "11년동안 업데이트 안했다... 600만 데이터 털리고 14만개 고객사 영향 | Oracle 클라우드 해킹 사건 총정리 | SSO LDAP JKS",
+                "duration": "13:12",
+                "total_seconds": 792,
+                "is_processed": false,
+                "cosine_similarity": 0.78
+            },
+            {
+                "id": "XSgHsGAmEJc",
+                "title": "6G 전쟁, 우주패권은 사실... 미국의 기술 패권을 위한 큰 그림",
+                "duration": "09:32",
+                "total_seconds": 572,
+                "is_processed": false,
+                "cosine_similarity": 0.81
+            },
+            {
+                "id": "bV-7pofmpng",
+                "title": "모르고 쓰면 개인정보 털려... 개발자 사이에 제2의 딥시크라는  AI 앱 혁명 MCP, 보안 유지하려면 어떻게?",
+                "duration": "13:05",
+                "total_seconds": 785,
+                "is_processed": false,
+                "cosine_similarity": 0.83
+            },
+            {
+                "id": "Qdu6Sv-NpeU",
+                "title": "모르면 실시간 손해? MCP, 딥시크 속도로 빠르게 확산 | 무료 AI 앱 폭발하게 된 MCP, 클로드 커서ai 동반 폭등 | 진짜 에이전트AI 시대 | 샘알트먼 급하게 지원 약속",
+                "duration": "16:55",
+                "total_seconds": 1015,
+                "is_processed": false,
+                "cosine_similarity": 0.84
+            },
+            {
+                "id": "dT3mEFwI6gM",
+                "title": "시간은 대체 언제 생겨났나... 죽음은 시스템을 위해 필연적이다...? 코드처럼 작동하는 우주, 세상의 작동 방식을 이야기하다 [포레스트북스x안될공학]",
+                "duration": "09:25",
+                "total_seconds": 565,
+                "is_processed": false,
+                "cosine_similarity": 0.83
+            },
+            {
+                "id": "PLTub_HG82U",
+                "title": "현대차 도요타 손잡다? 테슬라와 중국기업 약진 이겨내기 위한 AI 휴머노이드로 글로벌 제조업에 박차 | 옵티머스와 Figure | 유압식과 전동식 | 수소차",
+                "duration": "10:41",
+                "total_seconds": 641,
+                "is_processed": false,
+                "cosine_similarity": 0.87
+            },
+            {
+                "id": "9fydQGdUlfw",
+                "title": "GPT-4o 새로운 이미지 생성기… 지브리 말고 어디까지 써봤니?? 직접 이것저것 해보니",
+                "duration": "07:56",
+                "total_seconds": 476,
+                "is_processed": false,
+                "cosine_similarity": 0.8
+            },
+            {
+                "id": "WYDw0t-86Mw",
+                "title": "사망자 1000명까지 예상… 미얀마 7.7 강진, 건물 붕괴에 방콕까지 영향 | 사가잉 단층의 경고",
+                "duration": "06:10",
+                "total_seconds": 370,
+                "is_processed": false,
+                "cosine_similarity": 0.82
+            },
+            {
+                "id": "8i3UMBzkM_8",
+                "title": "OpenAI 신규 이미지 생성 출시 이후... SNS에서 쏟아지고 있는 각종 밈 현황 (반지의 제왕, 인터스텔라, 트럼프, 젠슨황...)",
+                "duration": "04:31",
+                "total_seconds": 271,
+                "is_processed": false,
+                "cosine_similarity": 0.83
+            },
+            {
+                "id": "eK-VVxcH2nc",
+                "title": "OpenAI 새로운 이미지 생성기... 지금 난리 난 이유 | 한글도 자연스럽게",
+                "duration": "09:03",
+                "total_seconds": 543,
+                "is_processed": false,
+                "cosine_similarity": 0.87
+            },
+            {
+                "id": "CVyEg2hfsMk",
+                "title": "보스턴 다이내믹스 x NVIDIA = 떡상?? |  NVIDIA 플랫폼 활용한 기존 로봇 구동 강자, Physical AI 선두 노린다",
+                "duration": "06:42",
+                "total_seconds": 402,
+                "is_processed": false,
+                "cosine_similarity": 0.81
+            },
+            {
+                "id": "5URbDZWQvmE",
+                "title": "테슬라 공장 그대로 따라간다… Figure AI, 1년 12,000개 휴머노이드 생산하는 수직통합 공장 botQ 공개 | 기가캐스팅, 공장 AI 최적화",
+                "duration": "13:56",
+                "total_seconds": 836,
+                "is_processed": false,
+                "cosine_similarity": 0.81
+            },
+            {
+                "id": "oXg_DV_b09g",
+                "title": "미쳐버린 구글AI 근황… 플랫폼 강자가 앞선다 | 딥씨크 GPT4보다 좋은 소형 LLM(오픈모델) gemma3 | 고퀄 이미지 통합 LLM | 딥리서치 무료 | 진정한 개인화 답변",
+                "duration": "13:04",
+                "total_seconds": 784,
+                "is_processed": false,
+                "cosine_similarity": 0.82
+            },
+            {
+                "id": "gzUFSM5Z8FQ",
+                "title": "이건 제2의 딥시크다! 주식 분석, 웹사이트 제작, 출판물 작업 | Manus, Agentic AI 시작을 알리나 | AutoGPT와 다른점",
+                "duration": "13:21",
+                "total_seconds": 801,
+                "is_processed": false,
+                "cosine_similarity": 0.82
             }
         ],
-        "nextPageToken": "EAAaHlBUOkNESWlFRFpCUWtNMlEwSTNSa1UyUTBRelFrUQ"
+        "nextPageToken": "EAAaHlBUOkNHUWlFRE0xUWpNeFFUQkRRVFZEUTBFeU5qVQ"
     }
 }

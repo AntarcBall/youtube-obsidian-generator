@@ -98,6 +98,7 @@ class App(tk.Tk):
         self.insert_dash_in_titles = tk.BooleanVar(value=CONFIG.get('insert_dash_in_titles', True))
         self.gemini_model_var = tk.StringVar(value=CONFIG.get('gemini_model', 'gemini-2.0-flash-lite'))
         self.keyword = tk.StringVar()
+        self.min_cos_similarity = tk.StringVar(value="0.0")
         
         # --- 스타일 설정 ---
         self.style = ttk.Style(self)
@@ -161,6 +162,13 @@ class App(tk.Tk):
         if 8 <= new_size <= 24:
             self.font_size = new_size
             self.update_styles()
+            
+    def toggle_min_cos_entry(self, *args):
+        if self.keyword.get().strip():
+            self.min_cos_entry.config(state="normal")
+        else:
+            self.min_cos_entry.config(state="disabled")
+            self.min_cos_similarity.set("0.0")
             
     def switch_scene(self, new_scene_creator, *args):
         if self.current_scene:
@@ -245,6 +253,16 @@ class App(tk.Tk):
         self.keyword_entry = ttk.Entry(keyword_frame, textvariable=self.keyword)
         self.keyword_entry.pack(side="left", expand=True, fill="x")
 
+        # 최소 코사인 유사도 입력
+        min_cos_frame = ttk.Frame(main_content_frame)
+        min_cos_frame.pack(fill='x', pady=(5, 5))
+        ttk.Label(min_cos_frame, text="최소 코사인 유사도:").pack(side="left", padx=(0, 10))
+        self.min_cos_entry = ttk.Entry(min_cos_frame, textvariable=self.min_cos_similarity)
+        self.min_cos_entry.pack(side="left", expand=True, fill="x")
+        
+        self.keyword.trace_add("write", self.toggle_min_cos_entry)
+        self.toggle_min_cos_entry() # 초기 상태 설정을 위해 호출
+
         # 저장 경로 입력
         path_frame = ttk.Frame(main_content_frame)
         path_frame.pack(fill='x', pady=(0, 10))
@@ -282,7 +300,13 @@ class App(tk.Tk):
         self.obsidian_path = self.path_entry.get()
         self.user_prompt = self.prompt_text.get("1.0", tk.END)
         self.min_video_duration = self.min_duration_seconds.get()
-        self.keyword_text = self.keyword.get()
+        self.keyword_text = self.keyword.get().strip()
+
+        try:
+            self.min_cos_float = float(self.min_cos_similarity.get())
+        except ValueError:
+            messagebox.showerror("입력 오류", "최소 코사인 유사도는 숫자여야 합니다.")
+            return
 
         if not self.channel_url or not self.obsidian_path:
             messagebox.showerror("입력 오류", "채널 URL과 저장 경로는 필수입니다.")
@@ -326,7 +350,7 @@ class App(tk.Tk):
                 youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
 
             processed_log = youtube_helper.load_processed_videos_log()
-            filtered_videos = []
+            videos_to_process = []
             for video in self.all_videos:
                 if not self.include_shorts.get() and video['title'].strip().endswith('#비밀치트키'):
                     continue
@@ -336,25 +360,28 @@ class App(tk.Tk):
                     continue
                 
                 video['is_processed'] = video['id'] in processed_log
-                filtered_videos.append(video)
+                videos_to_process.append(video)
             
-            self.all_videos = filtered_videos
-
             if self.keyword_text:
                 self.q.put(("log", "키워드와 영상 제목의 코사인 유사도를 계산합니다..."))
-                titles = [video['title'] for video in self.all_videos]
+                titles = [video['title'] for video in videos_to_process]
                 
                 try:
                     keyword_embedding = gemini_helper.get_embeddings([self.keyword_text])['embedding']
                     title_embeddings = gemini_helper.get_embeddings(titles)['embedding']
 
-                    for i, video in enumerate(self.all_videos):
+                    for i, video in enumerate(videos_to_process):
                         similarity = gemini_helper.calculate_cosine_similarity(keyword_embedding[0], title_embeddings[i])
-                        video['cosine_similarity'] = f"{similarity:.2f}"
+                        video['cosine_similarity'] = float(f"{similarity:.2f}")
+                
                 except Exception as e:
                     self.q.put(("error", f"코사인 유사도 계산 실패: {e}"))
+                    videos_to_process = [] # 유사도 계산 실패 시 목록 비움
 
+                if self.min_cos_float > 0.0:
+                    videos_to_process = [v for v in videos_to_process if v.get('cosine_similarity', 0) >= self.min_cos_float]
 
+            self.all_videos = videos_to_process
             self.q.put(("videos_fetched", self.all_videos))
 
         except Exception as e:
@@ -457,9 +484,14 @@ class App(tk.Tk):
 
                     for i, video in enumerate(filtered_batch):
                         similarity = gemini_helper.calculate_cosine_similarity(keyword_embedding[0], title_embeddings[i])
-                        video['cosine_similarity'] = f"{similarity:.2f}"
+                        video['cosine_similarity'] = float(f"{similarity:.2f}")
+
                 except Exception as e:
                     self.q.put(("error", f"코사인 유사도 계산 실패: {e}"))
+                    filtered_batch = []
+
+                if self.min_cos_float > 0.0:
+                    filtered_batch = [v for v in filtered_batch if v.get('cosine_similarity', 0) >= self.min_cos_float]
 
             self.all_videos.extend(filtered_batch)
             youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
