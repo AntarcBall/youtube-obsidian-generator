@@ -337,57 +337,56 @@ class App(tk.Tk):
         self.channel_url_for_batch = self.channel_url # 현재 로드 중인 채널 URL 저장
         threading.Thread(target=self.fetch_videos_thread, daemon=True).start()
 
-    def fetch_videos_thread(self):
-        try:
-            self.channel_id = youtube_helper.get_channel_id_from_url(self.channel_url)
-            if not self.channel_id:
-                raise ValueError("유효한 채널 ID를 찾을 수 없습니다.")
+    def _fetch_and_filter_videos(self, target_count, page_token):
+        """
+        target_count에 도달할 때까지 비디오를 가져오고 필터링하는 헬퍼 함수.
+        """
+        filtered_videos = []
+        processed_log = youtube_helper.load_processed_videos_log(CONFIG)
 
-            video_cache = youtube_helper.load_video_list_cache(CONFIG)
-            cached_data = video_cache.get(self.channel_id)
-
-            # 캐시 데이터 형식 확인 (오래된 캐시 형식일 경우 무효화)
-            if cached_data and not isinstance(cached_data, dict):
-                print("오래된 형식의 캐시를 발견하여 무효화합니다. 새로 목록을 불러옵니다.")
-                cached_data = None # 캐시를 무효화하여 새로 불러오도록 함
-
-            if cached_data:
-                print(f"'{self.channel_id}' 채널의 영상 목록을 캐시에서 불러옵니다.")
-                self.all_videos = cached_data.get("videos", [])
-                self.next_page_token = cached_data.get("nextPageToken")
-            else:
-                print("캐시된 영상 목록이 없습니다. API에서 새로 가져옵니다.")
-                videos_batch, self.next_page_token = youtube_helper.get_videos_from_channel(
-                    self.channel_url, 
-                    max_results=CONFIG.get("list_load_batch_size", 100)
-                )
-                self.all_videos = videos_batch
-                # 원본 비디오 목록을 캐시에 저장
-                youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token, CONFIG)
+        while len(filtered_videos) < target_count and page_token is not None:
+            videos_batch, next_page_token = youtube_helper.get_videos_from_channel(
+                self.channel_url,
+                max_results=CONFIG.get("list_load_batch_size", 50),
+                page_token=page_token
+            )
             
-            # 필터링과 중복 제거를 적용할 원본 데이터 복사
-            videos_to_process = list(self.all_videos)
+            if not videos_batch:
+                page_token = None
+                break
+
+            self.all_videos.extend(videos_batch)
+            page_token = next_page_token
 
             # 중복 제거 및 필터링
+            videos_to_process = list(videos_batch) # 새로 가져온 배치만 처리
             final_videos = []
             if self.ignore_shorter_duplicates.get():
-                # 제목을 키로 하고 가장 긴 영상을 값으로 하는 딕셔너리
+                # 중복 제거는 전체 비디오 목록을 대상으로 해야 함
                 unique_videos_by_title = {}
-                for video in videos_to_process:
+                for video in self.all_videos: # self.all_videos 사용
                     normalized_title = self._normalize_title_for_deduplication(video['title'])
-                    if not normalized_title: # 정규화 후 제목이 비는 경우 건너뛰기
+                    if not normalized_title:
                         continue
                     if normalized_title not in unique_videos_by_title or \
                        video.get('total_seconds', 0) > unique_videos_by_title[normalized_title].get('total_seconds', 0):
                         unique_videos_by_title[normalized_title] = video
-                final_videos = list(unique_videos_by_title.values())
+                
+                # 현재 필터링된 비디오 목록과 중복을 제거한 전체 목록을 비교하여
+                # 새로 추가될 비디오만 식별
+                current_filtered_ids = {v['id'] for v in filtered_videos}
+                all_final_videos = list(unique_videos_by_title.values())
+                final_videos = [v for v in all_final_videos if v['id'] not in current_filtered_ids]
+
             else:
                 final_videos = videos_to_process
 
-            # 필터링 및 'is_processed' 플래그 적용
-            processed_log = youtube_helper.load_processed_videos_log(CONFIG)
-            filtered_videos = []
-            for video in final_videos: # final_videos를 사용
+            # 필터링
+            newly_filtered = []
+            for video in final_videos:
+                # 이미 추가된 비디오인지 다시 확인 (중복 제거 로직 변경으로 인해 필요)
+                if video['id'] in [v['id'] for v in filtered_videos]:
+                    continue
                 if not self.include_shorts.get() and video['title'].strip().endswith('#비밀치트키'):
                     continue
                 if video.get('total_seconds', 0) < self.min_duration_seconds.get():
@@ -396,10 +395,52 @@ class App(tk.Tk):
                     continue
                 
                 video['is_processed'] = video['id'] in processed_log
-                filtered_videos.append(video)
+                newly_filtered.append(video)
             
-            # UI에 표시될 비디오는 필터링된 목록이지만, self.all_videos는 원본을 유지
-            self.q.put(("videos_fetched", filtered_videos))
+            filtered_videos.extend(newly_filtered)
+
+        return filtered_videos, page_token
+
+    def fetch_videos_thread(self):
+        try:
+            self.channel_id = youtube_helper.get_channel_id_from_url(self.channel_url)
+            if not self.channel_id:
+                raise ValueError("유효한 채널 ID를 찾을 수 없습니다.")
+
+            # 캐시 로직은 초기 로드에만 적용하도록 간소화
+            video_cache = youtube_helper.load_video_list_cache(CONFIG)
+            cached_data = video_cache.get(self.channel_id)
+
+            if cached_data and isinstance(cached_data, dict):
+                print(f"'{self.channel_id}' 채널의 영상 목록을 캐시에서 불러옵니다.")
+                self.all_videos = cached_data.get("videos", [])
+                self.next_page_token = cached_data.get("nextPageToken")
+                
+                # 캐시 데이터에 대해 필터링 적용
+                processed_log = youtube_helper.load_processed_videos_log(CONFIG)
+                filtered_videos = []
+                for video in self.all_videos:
+                    if not self.include_shorts.get() and video['title'].strip().endswith('#비밀치트키'):
+                        continue
+                    if video.get('total_seconds', 0) < self.min_duration_seconds.get():
+                        continue
+                    if video.get('total_seconds', 0) > self.max_duration_seconds.get():
+                        continue
+                    video['is_processed'] = video['id'] in processed_log
+                    filtered_videos.append(video)
+                
+                self.q.put(("videos_fetched", filtered_videos))
+
+            else:
+                print("캐시된 영상 목록이 없거나 오래된 형식입니다. API에서 새로 가져옵니다.")
+                self.all_videos = []
+                initial_videos, self.next_page_token = self._fetch_and_filter_videos(
+                    CONFIG.get("list_load_batch_size", 50), 
+                    None
+                )
+                self.all_videos = initial_videos
+                youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token, CONFIG)
+                self.q.put(("videos_fetched", initial_videos))
 
         except Exception as e:
             self.q.put(("error", f"영상 목록 로딩 실패: {e}"))
@@ -466,50 +507,20 @@ class App(tk.Tk):
 
     def _load_more_videos_thread(self):
         try:
-            videos_batch, self.next_page_token = youtube_helper.get_videos_from_channel(
-                self.channel_url,
-                max_results=CONFIG.get("list_load_batch_size", 100),
-                page_token=self.next_page_token
+            new_videos, self.next_page_token = self._fetch_and_filter_videos(
+                CONFIG.get("list_load_batch_size", 50),
+                self.next_page_token
             )
             
-            # 새로 로드된 비디오를 기존 원본 목록에 추가
-            self.all_videos.extend(videos_batch)
-            
-            # 업데이트된 전체 원본 목록을 캐시에 저장
-            youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token, CONFIG)
-
-            # 필터링과 중복 제거를 적용할 데이터 복사
-            videos_to_process = list(self.all_videos)
-            
-            final_videos_after_load_more = []
-            if self.ignore_shorter_duplicates.get():
-                unique_videos_by_title = {}
-                for video in videos_to_process:
-                    normalized_title = self._normalize_title_for_deduplication(video['title'])
-                    if not normalized_title: # 정규화 후 제목이 비는 경우 건너뛰기
-                        continue
-                    if normalized_title not in unique_videos_by_title or \
-                       video.get('total_seconds', 0) > unique_videos_by_title[normalized_title].get('total_seconds', 0):
-                        unique_videos_by_title[normalized_title] = video
-                final_videos_after_load_more = list(unique_videos_by_title.values())
+            if new_videos:
+                # 새로운 비디오만 UI에 추가하도록 큐에 전달
+                self.q.put(("add_videos_to_tree", new_videos))
+                # 전체 비디오 목록을 캐시에 저장
+                youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token, CONFIG)
             else:
-                final_videos_after_load_more = videos_to_process
+                # 더 이상 로드할 비디오가 없음을 UI에 알림
+                self.q.put(("no_more_videos", None))
 
-            # 필터링 및 'is_processed' 플래그 추가
-            processed_log = youtube_helper.load_processed_videos_log(CONFIG)
-            filtered_videos_for_all = []
-            for video in final_videos_after_load_more:
-                if not self.include_shorts.get() and video['title'].strip().endswith('#비밀치트키'):
-                    continue
-                if video.get('total_seconds', 0) < self.min_duration_seconds.get():
-                    continue
-                if video.get('total_seconds', 0) > self.max_duration_seconds.get():
-                    continue
-                video['is_processed'] = video['id'] in processed_log
-                filtered_videos_for_all.append(video)
-
-            # videos_fetched 이벤트를 사용하여 Treeview 전체 갱신
-            self.q.put(("videos_fetched", filtered_videos_for_all))
         except Exception as e:
             self.q.put(("error", f"추가 영상 로딩 실패: {e}"))
 
@@ -626,11 +637,15 @@ class App(tk.Tk):
             elif msg_type == "add_videos_to_tree":
                 for video in data:
                     tags = ('processed',) if video.get('is_processed') else ()
-                    self.tree.insert("", "end", values=(video['title'], video['duration']), iid=video['id'], tags=tags)
+                    # 중복 추가 방지
+                    if not self.tree.exists(video['id']):
+                        self.tree.insert("", "end", values=(video['title'], video['duration']), iid=video['id'], tags=tags)
                 if self.next_page_token:
                     self.load_more_btn.config(state="normal", text="추가 로드")
                 else:
                     self.load_more_btn.config(state="disabled", text="더 이상 영상 없음")
+            elif msg_type == "no_more_videos":
+                self.load_more_btn.config(state="disabled", text="더 이상 영상 없음")
             elif msg_type == "error":
                 messagebox.showerror("오류", data)
                 if hasattr(self, 'confirm_btn1'):
