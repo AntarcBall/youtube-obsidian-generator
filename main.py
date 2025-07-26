@@ -24,10 +24,11 @@ def load_config(filepath="config.json"):
         "theme": "dark",
         "obsidian_path": "C:/Users/bounc/OneDrive/Document/SummerVCT/Notes",
         "gemini_batch_size": 30,
+        "gemini_retry_count": 3, # Gemini API 재시도 횟수
         "youtube_url": "https://www.youtube.com/@slow_doctor",
         "min_video_duration": 120, # Default to 2 minutes (120 seconds)
         "run_ip_test": True, # Default to True
-        "gemini_model": "gemini-2.0-flash", # Default Gemini model
+        "gemini_model": "gemini-1.5-flash", # Default Gemini model
         "list_load_batch_size": 50, # Default to 50
         "include_shorts": False, # Default to False
         "keep_original_title": False, # Default to False
@@ -101,7 +102,7 @@ class App(tk.Tk):
         self.keep_original_title = tk.BooleanVar(value=CONFIG.get('keep_original_title', False))
         self.auto_quit_on_completion = tk.BooleanVar(value=CONFIG.get('auto_quit_on_completion', False))
         self.insert_dash_in_titles = tk.BooleanVar(value=CONFIG.get('insert_dash_in_titles', True))
-        self.gemini_model_var = tk.StringVar(value=CONFIG.get('gemini_model', 'gemini-2.0-flash-lite'))
+        self.gemini_model_var = tk.StringVar(value=CONFIG.get('gemini_model', 'gemini-1.5-flash'))
         self.keyword = tk.StringVar()
         self.min_cos_similarity = tk.StringVar(value="0.0")
         self.use_other_prompt = tk.BooleanVar(value=CONFIG.get('use_other_prompt', False))
@@ -249,8 +250,6 @@ class App(tk.Tk):
         ttk.Label(model_frame, text="Gemini 모델:").pack(side="left")
         ttk.Radiobutton(model_frame, text="1.5 Flash", variable=self.gemini_model_var, value="gemini-1.5-flash").pack(side="left", padx=2)
         ttk.Radiobutton(model_frame, text="2.0 Flash", variable=self.gemini_model_var, value="gemini-2.0-flash").pack(side="left", padx=2)
-        ttk.Radiobutton(model_frame, text="2.5 Flash", variable=self.gemini_model_var, value="gemini-2.5-flash").pack(side="left", padx=2)
-        ttk.Radiobutton(model_frame, text="2.0 Flash Lite", variable=self.gemini_model_var, value="gemini-2.0-flash-lite").pack(side="left", padx=2)
 
         main_content_frame = ttk.Frame(scene1)
         main_content_frame.pack(fill="both", expand=True, pady=10)
