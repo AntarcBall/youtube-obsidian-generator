@@ -14,5 +14,6 @@
     "keep_original_title": true,
     "auto_quit_on_completion": false,
     "insert_dash_in_titles": false,
-    "use_other_prompt": true
+    "use_other_prompt": true,
+    "gemini_retry_count": 3
 }
