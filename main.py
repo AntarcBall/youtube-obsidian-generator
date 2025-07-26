@@ -104,7 +104,7 @@ class App(tk.Tk):
         self.insert_dash_in_titles = tk.BooleanVar(value=CONFIG.get('insert_dash_in_titles', True))
         self.gemini_model_var = tk.StringVar(value=CONFIG.get('gemini_model', 'gemini-1.5-flash'))
         self.keyword = tk.StringVar()
-        self.min_cos_similarity = tk.StringVar(value="0.0")
+        self.min_cos_similarity = tk.StringVar(value="0.8")
         self.use_other_prompt = tk.BooleanVar(value=CONFIG.get('use_other_prompt', False))
         
         # --- 스타일 설정 ---
@@ -175,7 +175,7 @@ class App(tk.Tk):
             self.min_cos_entry.config(state="normal")
         else:
             self.min_cos_entry.config(state="disabled")
-            self.min_cos_similarity.set("0.0")
+            self.min_cos_similarity.set("0.8")
 
     def update_prompt_display(self):
         new_prompt = load_prompt_from_json(use_other=self.use_other_prompt.get())
