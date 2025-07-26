@@ -31,7 +31,8 @@ def load_config(filepath="config.json"):
         "list_load_batch_size": 50, # Default to 50
         "include_shorts": False, # Default to False
         "keep_original_title": False, # Default to False
-        "auto_quit_on_completion": False # Default to False
+        "auto_quit_on_completion": False, # Default to False
+        "use_other_prompt": False 
     }
 
     if not os.path.exists(config_path):
@@ -48,13 +49,17 @@ def load_config(filepath="config.json"):
     except (json.JSONDecodeError, IOError):
         return defaults
 
-def load_prompt_from_json(filepath="default_prompt.json"):
+def load_prompt_from_json(use_other=False):
     """JSON 파일에서 기본 프롬프트를 로드합니다."""
+    filename = "other_prompt.json" if use_other else "default_prompt.json"
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(script_dir, filepath)
+    json_path = os.path.join(script_dir, filename)
     
     if not os.path.exists(json_path):
         print(f"경고: {json_path} 파일을 찾을 수 없습니다. 기본 프롬프트를 사용합니다.")
+        # other_prompt.json이 없을 경우 default_prompt.json으로 대체
+        if use_other:
+            return load_prompt_from_json(use_other=False)
         return "다음 텍스트를 요약하고 정리해주세요:\n\n"
     
     try:
@@ -76,8 +81,8 @@ def save_config(config, filepath="config.json"):
         print(f"설정 파일 저장 실패: {e}")
 
 # --- 기본 설정 ---
-DEFAULT_PROMPT = load_prompt_from_json()
 CONFIG = load_config()
+DEFAULT_PROMPT = load_prompt_from_json(use_other=CONFIG.get("use_other_prompt", False))
 print(f"Loaded gemini_batch_size from config: {CONFIG.get('gemini_batch_size')}")
 
 
@@ -99,6 +104,7 @@ class App(tk.Tk):
         self.gemini_model_var = tk.StringVar(value=CONFIG.get('gemini_model', 'gemini-2.0-flash-lite'))
         self.keyword = tk.StringVar()
         self.min_cos_similarity = tk.StringVar(value="0.0")
+        self.use_other_prompt = tk.BooleanVar(value=CONFIG.get('use_other_prompt', False))
         
         # --- 스타일 설정 ---
         self.style = ttk.Style(self)
@@ -169,6 +175,13 @@ class App(tk.Tk):
         else:
             self.min_cos_entry.config(state="disabled")
             self.min_cos_similarity.set("0.0")
+
+    def update_prompt_display(self):
+        new_prompt = load_prompt_from_json(use_other=self.use_other_prompt.get())
+        self.prompt_text.delete("1.0", tk.END)
+        self.prompt_text.insert(tk.END, new_prompt)
+        CONFIG['use_other_prompt'] = self.use_other_prompt.get()
+        save_config(CONFIG)
             
     def switch_scene(self, new_scene_creator, *args):
         if self.current_scene:
@@ -192,6 +205,7 @@ class App(tk.Tk):
         ttk.Checkbutton(row1_frame, text="다크 모드", variable=self.is_dark_mode, command=self.update_styles).pack(side="left", padx=10)
         ttk.Checkbutton(row1_frame, text="Shorts 영상 포함", variable=self.include_shorts).pack(side="left", padx=10)
         ttk.Checkbutton(row1_frame, text="제목 원본 유지", variable=self.keep_original_title).pack(side="left", padx=10)
+        ttk.Checkbutton(row1_frame, text="다른 프롬프트 사용", variable=self.use_other_prompt, command=self.update_prompt_display).pack(side="left", padx=10)
 
         # 두 번째 줄 체크박스
         row2_frame = ttk.Frame(control_frame)
@@ -552,6 +566,9 @@ class App(tk.Tk):
         for i in range(0, total, batch_size):
             batch_videos = self.selected_videos[i:i + batch_size]
             tasks = []
+            total_transcript_length = 0
+            batch_start_time = time.time()
+
             for j, video in enumerate(batch_videos):
                 video_id = video['id']
                 video_title = video['title']
@@ -562,9 +579,10 @@ class App(tk.Tk):
                         self.q.put(("log", f"  - 경고: '{video_title}' 스크립트를 찾을 수 없어 건너뜁니다."))
                         continue
                     
+                    total_transcript_length += len(transcript)
                     prompt_with_title = f"영상 제목: {video_title}\n\n{self.user_prompt}"
                     full_prompt = f"{prompt_with_title}\n\n--- 원본 스크립트 ---\n{transcript}\n--- 원본 스크립트 끝 ---"
-                    tasks.append({"id": video_id, "task": full_prompt, "original_title": video_title}) # original_title 추가
+                    tasks.append({"id": video_id, "task": full_prompt, "original_title": video_title})
 
                 except Exception as e:
                     self.q.put(("log", f"  - ✗ 오류: '{video_title}' 스크립트 추출 중 문제 발생 - {e}"))
@@ -577,24 +595,29 @@ class App(tk.Tk):
                 self.q.put(("log", f"  - Gemini API로 {len(tasks)}개 작업 배치 요청 중 (배치 {i//batch_size + 1})..."))
                 results = gemini_helper.process_batch_with_gemini(tasks, self.gemini_model_var.get())
                 
+                batch_end_time = time.time()
+                batch_duration = batch_end_time - batch_start_time
+                
+                if batch_duration > 0:
+                    speed = total_transcript_length / batch_duration
+                    self.q.put(("log", f"  - 배치 처리 완료. 평균 처리 속도: {speed:.2f} 자/초"))
+
                 result_map = {res['id']: res.get('result', f"No result found for ID {res.get('id')}") for res in results}
 
                 for task in tasks:
                     video_id = task['id']
-                    video_title = task['original_title'] # original_title 사용
+                    video_title = task['original_title']
                     
                     if video_id in result_map:
                         processed_content = result_map[video_id]
                         
-                        # 결과에 오류 메시지가 포함되어 있는지 확인
                         if "Error processing batch response" in processed_content:
                             self.q.put(("log", f"  - ✗ 오류: '{video_title}' 처리 중 API 오류 발생 - {processed_content}"))
-                            continue # 오류가 있으면 노트 저장을 건너뜀
+                            continue
 
                         self.q.put(("log", f"  - '{video_title}' 내용 가공 완료. 노트 저장 중..."))
                         file_helper.save_as_obsidian_note(self.obsidian_path, processed_content, self.keep_original_title.get(), video_title, self.insert_dash_in_titles.get())
                         
-                        # 성공적으로 저장된 비디오를 로그에 기록
                         youtube_helper.log_processed_video(video_id)
                         
                         self.q.put(("log", f"  - ✓ 완료: '{video_title}' 노트 생성 완료"))

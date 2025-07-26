@@ -2,9 +2,9 @@
     "$schema": "./config_schema.json",
     "font_size": 11,
     "theme": "dark",
-    "gemini_model": "gemini-2.0-flash-lite",
+    "gemini_model": "gemini-2.0-flash",
     "obsidian_path": "C:/Users/bounc/OneDrive/문서/GNifiedNotes",
-    "gemini_batch_size": 5,
+    "gemini_batch_size": 3,
     "youtube_url": "https://www.youtube.com/@안될공학",
     "min_video_duration": 120,
     "max_video_duration": 2400,
@@ -13,5 +13,6 @@
     "include_shorts": false,
     "keep_original_title": true,
     "auto_quit_on_completion": false,
-    "insert_dash_in_titles": false
+    "insert_dash_in_titles": false,
+    "use_other_prompt": true
 }
