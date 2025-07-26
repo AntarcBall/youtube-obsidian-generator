@@ -379,12 +379,12 @@ class App(tk.Tk):
         self.tree = ttk.Treeview(scene2, columns=cols, show="headings")
         self.tree.heading("제목", text="영상 제목")
         self.tree.heading("영상 길이", text="영상 길이")
-        self.tree.column("제목", width=600)
-        self.tree.column("영상 길이", width=40, anchor='center')
+        self.tree.column("제목", width=550)
+        self.tree.column("영상 길이", width=80, anchor='center', stretch=tk.NO)
 
         if self.keyword_text:
             self.tree.heading("코사인 유사도", text="코사인 유사도")
-            self.tree.column("코사인 유사도", width=60, anchor='center')
+            self.tree.column("코사인 유사도", width=130, anchor='center', stretch=tk.NO)
         
         processed_color = "#5DADE2"
         self.tree.tag_configure('processed', foreground=processed_color)
