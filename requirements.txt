@@ -1,0 +1,5 @@
+google-generativeai
+pytz
+numpy
+youtube-transcript-api
+google-api-python-client

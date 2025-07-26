@@ -4,10 +4,25 @@
 import google.generativeai as genai
 import json
 import os
+import numpy as np
 from .file_helper import load_api_key
 
 GEMINI_API_KEY = load_api_key("myapi")
 genai.configure(api_key=GEMINI_API_KEY)
+
+def get_embeddings(texts, model="embedding-001"):
+    """
+    주어진 텍스트 목록에 대한 임베딩을 생성합니다.
+    """
+    return genai.embed_content(model=model,
+                                content=texts,
+                                task_type="retrieval_document")
+
+def calculate_cosine_similarity(vec1, vec2):
+    """
+    두 벡터 간의 코사인 유사도를 계산합니다.
+    """
+    return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
 
 def load_gemini_model_from_config():
     """config.json에서 사용할 Gemini 모델 이름을 로드합니다."""
@@ -64,7 +79,7 @@ Example Input:
 
 Example Output:
 [
-  {{"id": "video1", "result": "He said \\"Hello World!\\""}}
+  {{"id": "video1", "result": "He said \\\"Hello World!\\\""}}
 ]
 
 Here is the actual task list:

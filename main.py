@@ -97,6 +97,7 @@ class App(tk.Tk):
         self.auto_quit_on_completion = tk.BooleanVar(value=CONFIG.get('auto_quit_on_completion', False))
         self.insert_dash_in_titles = tk.BooleanVar(value=CONFIG.get('insert_dash_in_titles', True))
         self.gemini_model_var = tk.StringVar(value=CONFIG.get('gemini_model', 'gemini-2.0-flash-lite'))
+        self.keyword = tk.StringVar()
         
         # --- 스타일 설정 ---
         self.style = ttk.Style(self)
@@ -237,6 +238,13 @@ class App(tk.Tk):
         self.url_entry.pack(side="left", expand=True, fill="x")
         self.url_entry.insert(0, CONFIG.get("youtube_url", ""))
 
+        # 키워드 입력
+        keyword_frame = ttk.Frame(main_content_frame)
+        keyword_frame.pack(fill='x', pady=(5, 5))
+        ttk.Label(keyword_frame, text="키워드:").pack(side="left", padx=(0, 10))
+        self.keyword_entry = ttk.Entry(keyword_frame, textvariable=self.keyword)
+        self.keyword_entry.pack(side="left", expand=True, fill="x")
+
         # 저장 경로 입력
         path_frame = ttk.Frame(main_content_frame)
         path_frame.pack(fill='x', pady=(0, 10))
@@ -274,6 +282,7 @@ class App(tk.Tk):
         self.obsidian_path = self.path_entry.get()
         self.user_prompt = self.prompt_text.get("1.0", tk.END)
         self.min_video_duration = self.min_duration_seconds.get()
+        self.keyword_text = self.keyword.get()
 
         if not self.channel_url or not self.obsidian_path:
             messagebox.showerror("입력 오류", "채널 URL과 저장 경로는 필수입니다.")
@@ -299,10 +308,9 @@ class App(tk.Tk):
             video_cache = youtube_helper.load_video_list_cache()
             cached_data = video_cache.get(self.channel_id)
 
-            # 캐시 데이터 형식 확인 (오래된 캐시 형식일 경우 무효화)
             if cached_data and not isinstance(cached_data, dict):
                 print("오래된 형식의 캐시를 발견하여 무효화합니다. 새로 목록을 불러옵니다.")
-                cached_data = None # 캐시를 무효화하여 새로 불러오도록 함
+                cached_data = None
 
             if cached_data:
                 print(f"'{self.channel_id}' 채널의 영상 목록을 캐시에서 불러옵니다.")
@@ -311,13 +319,12 @@ class App(tk.Tk):
             else:
                 print("캐시된 영상 목록이 없습니다. API에서 새로 가져옵니다.")
                 videos_batch, self.next_page_token = youtube_helper.get_videos_from_channel(
-                    self.channel_url, 
+                    self.channel_url,
                     max_results=CONFIG.get("list_load_batch_size", 100)
                 )
                 self.all_videos = videos_batch
                 youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
 
-            # 필터링 및 'is_processed' 플래그 적용
             processed_log = youtube_helper.load_processed_videos_log()
             filtered_videos = []
             for video in self.all_videos:
@@ -332,6 +339,22 @@ class App(tk.Tk):
                 filtered_videos.append(video)
             
             self.all_videos = filtered_videos
+
+            if self.keyword_text:
+                self.q.put(("log", "키워드와 영상 제목의 코사인 유사도를 계산합니다..."))
+                titles = [video['title'] for video in self.all_videos]
+                
+                try:
+                    keyword_embedding = gemini_helper.get_embeddings([self.keyword_text])['embedding']
+                    title_embeddings = gemini_helper.get_embeddings(titles)['embedding']
+
+                    for i, video in enumerate(self.all_videos):
+                        similarity = gemini_helper.calculate_cosine_similarity(keyword_embedding[0], title_embeddings[i])
+                        video['cosine_similarity'] = f"{similarity:.2f}"
+                except Exception as e:
+                    self.q.put(("error", f"코사인 유사도 계산 실패: {e}"))
+
+
             self.q.put(("videos_fetched", self.all_videos))
 
         except Exception as e:
@@ -350,11 +373,18 @@ class App(tk.Tk):
         self.selection_count_label.pack(side="right", anchor='e')
 
         cols = ("제목", "영상 길이")
+        if self.keyword_text:
+            cols += ("코사인 유사도",)
+
         self.tree = ttk.Treeview(scene2, columns=cols, show="headings")
         self.tree.heading("제목", text="영상 제목")
         self.tree.heading("영상 길이", text="영상 길이")
         self.tree.column("제목", width=600)
-        self.tree.column("영상 길이", width=100, anchor='center')
+        self.tree.column("영상 길이", width=40, anchor='center')
+
+        if self.keyword_text:
+            self.tree.heading("코사인 유사도", text="코사인 유사도")
+            self.tree.column("코사인 유사도", width=60, anchor='center')
         
         processed_color = "#5DADE2"
         self.tree.tag_configure('processed', foreground=processed_color)
@@ -367,7 +397,10 @@ class App(tk.Tk):
 
         for video in videos_batch:
             tags = ('processed',) if video.get('is_processed') else ()
-            self.tree.insert("", "end", values=(video['title'], video['duration']), iid=video['id'], tags=tags)
+            values = (video['title'], video['duration'])
+            if self.keyword_text:
+                values += (video.get('cosine_similarity', 'N/A'),)
+            self.tree.insert("", "end", values=values, iid=video['id'], tags=tags)
         
         self.tree.bind('<<TreeviewSelect>>', self.on_tree_select)
 
@@ -404,7 +437,6 @@ class App(tk.Tk):
                 page_token=self.next_page_token
             )
             
-            # 필터링 및 플래그 추가
             processed_log = youtube_helper.load_processed_videos_log()
             filtered_batch = []
             for video in videos_batch:
@@ -417,7 +449,18 @@ class App(tk.Tk):
                 video['is_processed'] = video['id'] in processed_log
                 filtered_batch.append(video)
 
-            # 전체 비디오 목록 및 캐시 업데이트
+            if self.keyword_text:
+                titles = [video['title'] for video in filtered_batch]
+                try:
+                    keyword_embedding = gemini_helper.get_embeddings([self.keyword_text])['embedding']
+                    title_embeddings = gemini_helper.get_embeddings(titles)['embedding']
+
+                    for i, video in enumerate(filtered_batch):
+                        similarity = gemini_helper.calculate_cosine_similarity(keyword_embedding[0], title_embeddings[i])
+                        video['cosine_similarity'] = f"{similarity:.2f}"
+                except Exception as e:
+                    self.q.put(("error", f"코사인 유사도 계산 실패: {e}"))
+
             self.all_videos.extend(filtered_batch)
             youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
             
@@ -538,7 +581,10 @@ class App(tk.Tk):
             elif msg_type == "add_videos_to_tree":
                 for video in data:
                     tags = ('processed',) if video.get('is_processed') else ()
-                    self.tree.insert("", "end", values=(video['title'], video['duration']), iid=video['id'], tags=tags)
+                    values = (video['title'], video['duration'])
+                    if self.keyword_text:
+                        values += (video.get('cosine_similarity', 'N/A'),)
+                    self.tree.insert("", "end", values=values, iid=video['id'], tags=tags)
                 if self.next_page_token:
                     self.load_more_btn.config(state="normal", text="추가 로드")
                 else:
