@@ -376,10 +376,16 @@ class App(tk.Tk):
                 
                 except Exception as e:
                     self.q.put(("error", f"코사인 유사도 계산 실패: {e}"))
-                    videos_to_process = [] # 유사도 계산 실패 시 목록 비움
+                    for video in videos_to_process:
+                        video['cosine_similarity'] = 0.0
 
-                if self.min_cos_float > 0.0:
-                    videos_to_process = [v for v in videos_to_process if v.get('cosine_similarity', 0) >= self.min_cos_float]
+                final_videos = []
+                for v in videos_to_process:
+                    keyword_in_title = self.keyword_text.lower() in v['title'].lower()
+                    similarity_above_threshold = v.get('cosine_similarity', 0) >= self.min_cos_float
+                    if keyword_in_title or similarity_above_threshold:
+                        final_videos.append(v)
+                videos_to_process = final_videos
 
             self.all_videos = videos_to_process
             self.q.put(("videos_fetched", self.all_videos))
@@ -488,10 +494,16 @@ class App(tk.Tk):
 
                 except Exception as e:
                     self.q.put(("error", f"코사인 유사도 계산 실패: {e}"))
-                    filtered_batch = []
-
-                if self.min_cos_float > 0.0:
-                    filtered_batch = [v for v in filtered_batch if v.get('cosine_similarity', 0) >= self.min_cos_float]
+                    for video in filtered_batch:
+                        video['cosine_similarity'] = 0.0
+                
+                final_videos = []
+                for v in filtered_batch:
+                    keyword_in_title = self.keyword_text.lower() in v['title'].lower()
+                    similarity_above_threshold = v.get('cosine_similarity', 0) >= self.min_cos_float
+                    if keyword_in_title or similarity_above_threshold:
+                        final_videos.append(v)
+                filtered_batch = final_videos
 
             self.all_videos.extend(filtered_batch)
             youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
