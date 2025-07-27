@@ -17,7 +17,7 @@ def get_embeddings(texts, model="embedding-001"):
     """
     return genai.embed_content(model=model,
                                 content=texts,
-                                task_type="retrieval_document")
+                                task_type="RETRIEVAL_QUERY")
 
 def calculate_cosine_similarity(vec1, vec2):
     """
