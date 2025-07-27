@@ -250,6 +250,8 @@ class App(tk.Tk):
         ttk.Label(model_frame, text="Gemini 모델:").pack(side="left")
         ttk.Radiobutton(model_frame, text="1.5 Flash", variable=self.gemini_model_var, value="gemini-1.5-flash").pack(side="left", padx=2)
         ttk.Radiobutton(model_frame, text="2.0 Flash", variable=self.gemini_model_var, value="gemini-2.0-flash").pack(side="left", padx=2)
+        ttk.Radiobutton(model_frame, text="2.5 Flash", variable=self.gemini_model_var, value="gemini-2.5-flash").pack(side="left", padx=2)
+        ttk.Radiobutton(model_frame, text="2.0 Flash Lite", variable=self.gemini_model_var, value="gemini-2.0-flash-lite").pack(side="left", padx=2)
 
         main_content_frame = ttk.Frame(scene1)
         main_content_frame.pack(fill="both", expand=True, pady=10)
