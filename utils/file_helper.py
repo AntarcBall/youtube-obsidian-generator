@@ -90,3 +90,19 @@ def save_as_obsidian_note(path, content, keep_original_title=False, original_tit
         f.write(content)
     
     print(f"파일 저장 완료: {file_path}")
+
+def log_processing_speed(log_data, filename="processing_log.csv"):
+    """
+    처리 속도 및 관련 데이터를 CSV 파일에 기록합니다.
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    log_path = os.path.join(script_dir, "..", filename)
+    
+    # 파일이 없으면 헤더와 함께 생성
+    if not os.path.exists(log_path):
+        with open(log_path, 'w', encoding='utf-8', newline='') as f:
+            f.write("date,model,speed_chars_per_sec\n")
+            
+    # 데이터 추가
+    with open(log_path, 'a', encoding='utf-8', newline='') as f:
+        f.write(f"{log_data['date']},{log_data['model']},{log_data['speed']}\n")

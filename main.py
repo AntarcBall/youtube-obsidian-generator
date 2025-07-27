@@ -602,6 +602,14 @@ class App(tk.Tk):
                 if batch_duration > 0:
                     speed = total_transcript_length / batch_duration
                     self.q.put(("log", f"  - 배치 처리 완료. 평균 처리 속도: {speed:.2f} 자/초"))
+                    
+                    # CSV 로그 기록
+                    log_data = {
+                        "date": datetime.now().strftime('%Y-%m-%d'),
+                        "model": self.gemini_model_var.get(),
+                        "speed": f"{speed:.2f}"
+                    }
+                    file_helper.log_processing_speed(log_data)
 
                 result_map = {res['id']: res.get('result', f"No result found for ID {res.get('id')}") for res in results}
 
