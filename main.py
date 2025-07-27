@@ -625,6 +625,10 @@ class App(tk.Tk):
                     else:
                         self.q.put(("log", f"  - ✗ 오류: '{video_title}' 처리 결과가 없습니다."))
 
+            except gemini_helper.BatchProcessingError as e:
+                self.q.put(("log", f"  - ✗ 치명적 오류: Gemini 배치 처리에 실패하여 나머지 모든 작업을 중단합니다. 오류: {e}"))
+                self.q.put(("done", "오류로 인해 작업이 중단되었습니다."))
+                return
             except Exception as e:
                 self.q.put(("log", f"  - ✗ 오류: Gemini 배치 처리 중 문제 발생 - {e}"))
             

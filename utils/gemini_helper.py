@@ -8,6 +8,10 @@ import numpy as np
 import time
 from .file_helper import load_api_key
 
+class BatchProcessingError(Exception):
+    """배치 처리가 모든 재시도 후에도 실패했을 때 발생하는 예외입니다."""
+    pass
+
 GEMINI_API_KEY = load_api_key("myapi")
 genai.configure(api_key=GEMINI_API_KEY)
 
@@ -60,7 +64,7 @@ def check_gemini_api():
 def process_batch_with_gemini(tasks, model_name=None):
     """
     여러 작업을 배치로 묶어 Gemini API에 한 번에 요청하고 결과를 반환합니다.
-    파싱 오류 발생 시 설정된 횟수만큼 재시도합니다.
+    파싱 오류 발생 시 설정된 횟수만큼 재시도하며, 최종 실패 시 BatchProcessingError를 발생시킵니다.
     
     Args:
         tasks (list): 각 항목이 {"id": "...", "task": "..."} 형태의 딕셔너리인 리스트
@@ -68,6 +72,9 @@ def process_batch_with_gemini(tasks, model_name=None):
         
     Returns:
         list: 각 항목이 {"id": "...", "result": "..."} 형태의 딕셔너리인 리스트
+        
+    Raises:
+        BatchProcessingError: 모든 재시도 후에도 배치 처리에 실패한 경우.
     """
     gemini_config = load_gemini_config()
     effective_model_name = model_name if model_name is not None else gemini_config["model"]
@@ -132,10 +139,12 @@ Here is the actual task list:
             print(f"[Gemini] Error parsing batch response on attempt {attempt + 1}: {e}")
             if attempt < retry_count - 1:
                 print("[Gemini] Retrying after a short delay...")
-                time.sleep(1) # 재시도 전 잠시 대기
+                time.sleep(1)
             else:
                 print(f"[Gemini] All {retry_count} retries failed.")
-                print(f"[Gemini] Raw response text: {response_text if 'response_text' in locals() else 'No response text captured'}")
+                raw_response = response_text if 'response_text' in locals() else 'No response text captured'
+                print(f"[Gemini] Raw response text: {raw_response}")
+                raise BatchProcessingError(f"Failed to process batch after {retry_count} attempts. Last error: {last_error}\nRaw response: {raw_response}")
 
-    # 모든 재시도 실패 시
-    return [{"id": task["id"], "result": f"Error processing batch response after {retry_count} attempts: {last_error}"} for task in tasks]
+    # 이 코드는 이제 실행되지 않지만, 만약의 경우를 대비해 남겨둡니다.
+    raise BatchProcessingError(f"An unexpected error occurred in process_batch_with_gemini after {retry_count} retries.")
