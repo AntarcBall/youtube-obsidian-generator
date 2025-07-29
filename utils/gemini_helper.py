@@ -4,9 +4,10 @@
 import google.generativeai as genai
 import json
 import os
+import re
 import numpy as np
 import time
-from .file_helper import load_api_key
+from .config_helper import load_api_key
 
 class BatchProcessingError(Exception):
     """배치 처리가 모든 재시도 후에도 실패했을 때 발생하는 예외입니다."""
@@ -148,3 +149,45 @@ Here is the actual task list:
 
     # 이 코드는 이제 실행되지 않지만, 만약의 경우를 대비해 남겨둡니다.
     raise BatchProcessingError(f"An unexpected error occurred in process_batch_with_gemini after {retry_count} retries.")
+
+def generate_title_with_gemini(content, model_name="gemini-1.5-flash"):
+    """
+    주어진 내용(content)을 기반으로 파일명을 생성하기 위해 Gemini API를 호출합니다.
+    
+    Args:
+        content (str): 파일명 생성을 위한 원본 내용 (예: 유튜브 스크립트).
+        model_name (str): 사용할 Gemini 모델 이름.
+        
+    Returns:
+        str: 생성된 파일명 (정리된 문자열).
+    """
+    try:
+        print(f"[Gemini] Generating title with model: {model_name}")
+        model = genai.GenerativeModel(model_name)
+        
+        prompt = f"""
+Please create a concise, descriptive filename based on the following text.
+The filename should be in English, under 15 words, and suitable for use as a file name.
+Do not include any special characters that are not allowed in filenames (e.g., \\, /, :, *, ?, ", <, >, |).
+Do not include the file extension.
+
+Content:
+{content[:4000]}
+
+Filename:
+"""
+        
+        response = model.generate_content(prompt)
+        generated_title = "".join([part.text for part in response.parts]).strip()
+        
+        # 추가적인 정리 작업
+        sanitized_title = re.sub(r'[\\/*?:"<>|]', "", generated_title)
+        sanitized_title = re.sub(r'\s+', '-', sanitized_title)
+        sanitized_title = re.sub(r'-+', '-', sanitized_title).strip('-')
+        
+        print(f"[Gemini] Generated title: {sanitized_title}")
+        return sanitized_title
+        
+    except Exception as e:
+        print(f"[Gemini] Error generating title: {e}")
+        return None

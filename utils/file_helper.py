@@ -4,26 +4,7 @@
 import os
 import re
 import json
-
-def load_api_key(key_name="myapi", filepath="MYAPI.json"):
-    """
-    지정된 JSON 파일에서 API 키를 로드합니다.
-    """
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    # 상위 디렉토리로 이동하여 MYAPI.json 찾기
-    json_path = os.path.join(script_dir, "..", filepath) 
-    
-    if not os.path.exists(json_path):
-        print(f"경고: {json_path} 파일을 찾을 수 없습니다.")
-        return None
-    
-    try:
-        with open(json_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            return data.get(key_name)
-    except (json.JSONDecodeError, IOError) as e:
-        print(f"경고: API 키 파일 로딩 실패 - {e}.")
-        return None
+from .gemini_helper import generate_title_with_gemini
 
 def _sanitize_filename(title, insert_dash):
     """
@@ -66,9 +47,15 @@ def save_as_obsidian_note(path, content, keep_original_title=False, original_tit
     base_filename = ""
     if keep_original_title and original_title:
         base_filename = _sanitize_filename(original_title, insert_dash)
-    
-    if not base_filename:
-        base_filename = generate_filename_from_content(content, insert_dash)
+    else:
+        # Gemini를 사용하여 파일명 생성
+        generated_title = generate_title_with_gemini(content)
+        if generated_title:
+            base_filename = _sanitize_filename(generated_title, insert_dash)
+        else:
+            # Gemini 호출 실패 시 기존 방식으로 대체
+            print("경고: Gemini 파일명 생성 실패. 내용의 첫 줄을 기반으로 파일명을 생성합니다.")
+            base_filename = generate_filename_from_content(content, insert_dash)
 
     if not base_filename:
         base_filename = "untitled"
@@ -81,7 +68,7 @@ def save_as_obsidian_note(path, content, keep_original_title=False, original_tit
     while os.path.exists(file_path):
         # 기존 파일명에서 카운터 제거 (예: title-1.md -> title.md)
         temp_base, ext = os.path.splitext(base_filename)
-        temp_base = re.sub(r'-\d+$', '', temp_base)
+        temp_base = re.sub(r'-\d+', '', temp_base)
         filename = f"{temp_base}-{counter}.md"
         file_path = os.path.join(path, filename)
         counter += 1

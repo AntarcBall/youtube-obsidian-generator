@@ -7,7 +7,7 @@ from pytubefix import YouTube
 import re
 import subprocess
 from isodate import parse_duration
-from .file_helper import load_api_key
+from .config_helper import load_api_key
 import os
 import json
 
