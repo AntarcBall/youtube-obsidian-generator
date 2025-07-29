@@ -35,6 +35,22 @@ def generate_filename_from_content(content, insert_dash):
     first_line = content.strip().split('\n')[0]
     return _sanitize_filename(first_line, insert_dash)
 
+def _format_bold_spacing(content):
+    """
+    내용에서 짝수 번째 '**' 뒤에 공백을 추가하여 마크다운 뷰어에서 더 잘 보이게 합니다.
+    """
+    parts = content.split('**')
+    if len(parts) < 3:
+        return content
+
+    new_content = parts[0]
+    for i in range(1, len(parts)):
+        if i % 2 == 0:
+            new_content += '** ' + parts[i]
+        else:
+            new_content += '**' + parts[i]
+    return new_content
+
 def save_as_obsidian_note(path, content, keep_original_title=False, original_title="", insert_dash=True):
     """
     지정된 경로에 가공된 내용을 마크다운 파일로 저장합니다.
@@ -72,9 +88,12 @@ def save_as_obsidian_note(path, content, keep_original_title=False, original_tit
         filename = f"{temp_base}-{counter}.md"
         file_path = os.path.join(path, filename)
         counter += 1
+    
+    # 최종 저장 전 내용 포맷팅
+    formatted_content = _format_bold_spacing(content)
 
     with open(file_path, 'w', encoding='utf-8') as f:
-        f.write(content)
+        f.write(formatted_content)
     
     print(f"파일 저장 완료: {file_path}")
 
