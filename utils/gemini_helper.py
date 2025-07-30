@@ -114,22 +114,17 @@ Here is the actual task list:
             if not response_text.strip():
                 raise ValueError("Received empty response from Gemini API.")
 
-            if '```json' in response_text:
-                json_part = response_text.split('```json')[1].split('```')[0].strip()
-            elif 'JSON' in response_text:
-                json_start_index = response_text.upper().find('JSON') + 4
-                first_bracket = -1
-                for char in ['[', '{']:
-                    pos = response_text.find(char, json_start_index)
-                    if pos != -1 and (first_bracket == -1 or pos < first_bracket):
-                        first_bracket = pos
-                
-                if first_bracket != -1:
-                    json_part = response_text[first_bracket:]
-                else:
-                    json_part = response_text
+            # 정규식을 사용하여 JSON 블록을 찾습니다.
+            # Markdown 코드 블록 (```json ... ```) 또는 일반 텍스트에 포함된 JSON을 모두 처리합니다.
+            json_match = re.search(r'```json\s*([\s\S]*?)\s*```|([\s\S]*\]|\{[\s\S]*\})', response_text)
+            
+            if json_match:
+                # 첫 번째 캡처 그룹 (```json ... ```) 또는 두 번째 캡처 그룹 (일반 JSON) 중 내용이 있는 것을 사용합니다.
+                json_part = json_match.group(1) if json_match.group(1) else json_match.group(2)
+                json_part = json_part.strip()
             else:
-                json_part = response_text
+                # JSON을 찾지 못한 경우, 응답 텍스트 전체를 파싱 시도합니다.
+                json_part = response_text.strip()
 
             results = json.loads(json_part)
             print(f"[Gemini] Batch response received and parsed successfully.")
@@ -138,13 +133,20 @@ Here is the actual task list:
         except (json.JSONDecodeError, IndexError, ValueError) as e:
             last_error = e
             print(f"[Gemini] Error parsing batch response on attempt {attempt + 1}: {e}")
+            
+            # 실패 시 원본 응답을 파일에 저장
+            if 'response_text' in locals():
+                error_log_path = os.path.join(os.path.dirname(__file__), '..', 'gemini_error_response.txt')
+                with open(error_log_path, 'w', encoding='utf-8') as f:
+                    f.write(response_text)
+                print(f"[Gemini] Raw response saved to {error_log_path}")
+
             if attempt < retry_count - 1:
                 print("[Gemini] Retrying after a short delay...")
-                time.sleep(1)
+                time.sleep(2)
             else:
                 print(f"[Gemini] All {retry_count} retries failed.")
                 raw_response = response_text if 'response_text' in locals() else 'No response text captured'
-                print(f"[Gemini] Raw response text: {raw_response}")
                 raise BatchProcessingError(f"Failed to process batch after {retry_count} attempts. Last error: {last_error}\nRaw response: {raw_response}")
 
     # 이 코드는 이제 실행되지 않지만, 만약의 경우를 대비해 남겨둡니다.
