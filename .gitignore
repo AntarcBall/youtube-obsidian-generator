@@ -4,3 +4,4 @@ __pycache__/
 MYAPI.json
 other_prompt.json
 processing_log.csv
+failed_videos.json
