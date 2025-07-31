@@ -13,7 +13,7 @@ import time
 import sys
 
 sys.stdout.reconfigure(encoding='utf-8')
-from utils import youtube_helper, gemini_helper, file_helper
+from utils import youtube_helper, gemini_helper, file_helper, failed_video_logger
 
 def load_config(filepath="config.json"):
     """JSON 파일에서 설정을 로드합니다."""
@@ -406,6 +406,12 @@ class App(tk.Tk):
                 videos_to_process = final_videos
 
             self.all_videos = videos_to_process
+            # 실패한 비디오 목록을 로드하여 상태를 업데이트합니다.
+            failed_ids = failed_video_logger.load_failed_videos()
+            for video in self.all_videos:
+                if video['id'] in failed_ids:
+                    video['is_failed'] = True
+
             self.q.put(("videos_fetched", self.all_videos))
 
         except Exception as e:
@@ -438,7 +444,10 @@ class App(tk.Tk):
             self.tree.column("코사인 유사도", width=130, anchor='center', stretch=tk.NO)
         
         processed_color = "#5DADE2"
+        failed_color = "#FF6B6B"
         self.tree.tag_configure('processed', foreground=processed_color)
+        self.tree.tag_configure('failed', foreground=failed_color)
+        self.tree.tag_configure('selected', foreground=failed_color)
         
         self.tree.pack(fill="both", expand=True, pady=10)
 
@@ -447,7 +456,12 @@ class App(tk.Tk):
         scrollbar.pack(side='right', fill='y')
 
         for video in videos_batch:
-            tags = ('processed',) if video.get('is_processed') else ()
+            tags = ()
+            if video.get('is_processed'):
+                tags = ('processed',)
+            if video.get('is_failed'):
+                tags = ('failed',)
+
             values = (video['title'], video['duration'])
             if self.keyword_text:
                 values += (video.get('cosine_similarity', 'N/A'),)
@@ -475,9 +489,22 @@ class App(tk.Tk):
         return scene2
 
     def on_tree_select(self, event):
-        """Treeview 선택 변경 시 호출되어 선택된 항목 수를 업데이트합니다."""
+        """Treeview 선택 변경 시 호출되어 선택된 항목 수를 업데이트하고, 선택된 항목을 빨간색으로 표시합니다."""
         selected_items = self.tree.selection()
         self.selection_count_label.config(text=f"선택된 항목: {len(selected_items)}개")
+
+        for item_id in self.tree.get_children(""):
+            current_tags = list(self.tree.item(item_id, 'tags'))
+            
+            # 'selected' 태그가 있으면 제거
+            if 'selected' in current_tags:
+                current_tags.remove('selected')
+
+            # 현재 선택된 항목이면 'selected' 태그 추가
+            if item_id in selected_items:
+                current_tags.append('selected')
+            
+            self.tree.item(item_id, tags=tuple(current_tags))
 
     def load_more_videos(self):
         self.load_more_btn.config(state="disabled", text="로딩 중...")
@@ -634,7 +661,9 @@ class App(tk.Tk):
                         self.q.put(("log", f"  - ✗ 오류: '{video_title}' 처리 결과가 없습니다."))
 
             except gemini_helper.BatchProcessingError as e:
-                self.q.put(("log", f"  - ✗ 치명적 오류: Gemini 배치 처리에 실패하여 나머지 모든 작업을 중단합니다. 오류: {e}"))
+                failed_videos_in_batch = [v for v in video_map.values() if v['id'] in [t['id'] for t in tasks]]
+                failed_video_logger.log_failed_videos(failed_videos_in_batch)
+                self.q.put(("log", f"  - ✗ 치명적 오류: Gemini 배치 처리에 실패하여 현재 배치의 영상들을 '실패'로 기록하고 중단합니다. 오류: {e}"))
                 self.q.put(("done", "오류로 인해 작업이 중단되었습니다."))
                 return
             except Exception as e:
