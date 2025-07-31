@@ -5,3 +5,4 @@ MYAPI.json
 other_prompt.json
 processing_log.csv
 failed_videos.json
+gemini_error_response.txt
