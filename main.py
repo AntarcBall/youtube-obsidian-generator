@@ -590,44 +590,60 @@ class App(tk.Tk):
         return scene3
 
     def process_videos_thread(self):
-        total = len(self.selected_videos)
         batch_size = CONFIG.get("gemini_batch_size", 30)
-        
         video_map = {v['id']: v for v in self.selected_videos}
-
-        self.q.put(("log", f"--- 총 {total}개 영상 배치 처리 시작 ---"))
         
-        # 배치 처리를 위한 루프
-        for i in range(0, total, batch_size):
-            batch_videos = self.selected_videos[i:i + batch_size]
+        # 처리할 영상 목록과 배치별 실패 횟수를 관리합니다.
+        videos_to_process = list(self.selected_videos)
+        failure_counts = {} # Key: batch_id (tuple of video ids), Value: failure count
+
+        total_initial_videos = len(videos_to_process)
+        self.q.put(("log", f"--- 총 {total_initial_videos}개 영상 배치 처리 시작 ---"))
+        
+        processed_count = 0
+
+        # 처리할 영상이 남아있는 동안 루프를 계속합니다.
+        while videos_to_process:
+            # 현재 처리할 배치를 가져옵니다.
+            batch_videos = videos_to_process[:batch_size]
+            videos_to_process = videos_to_process[batch_size:]
+
             tasks = []
             total_transcript_length = 0
             batch_start_time = time.time()
 
-            for j, video in enumerate(batch_videos):
+            # 배치 내의 각 영상에 대해 스크립트를 준비합니다.
+            for video in batch_videos:
                 video_id = video['id']
                 video_title = video['title']
-                self.q.put(("log", f"  - [{i+j+1}/{total}] '{video_title}' 스크립트 준비 중..."))
+                # UI에 진행 상황을 표시합니다. (전체 영상 수 기준)
+                self.q.put(("log", f"  - [{processed_count + len(tasks) + 1}/{total_initial_videos}] '{video_title}' 스크립트 준비 중..."))
                 try:
                     transcript, _ = youtube_helper.get_transcript(video_id)
                     if not transcript:
                         self.q.put(("log", f"  - 경고: '{video_title}' 스크립트를 찾을 수 없어 건너뜁니다."))
+                        processed_count += 1 # 건너뛰는 것도 처리된 것으로 간주
                         continue
                     
                     total_transcript_length += len(transcript)
                     prompt_with_title = f"영상 제목: {video_title}\n\n{self.user_prompt}"
-                    full_prompt = f"{prompt_with_title}\n\n--- 원본 스크립트 ---\n{transcript}\n--- 원본 스크립트 끝 ---"
+                    full_prompt = f"{prompt_with_title}\n\n--- 원본 스크립트 ---{transcript}\n--- 원본 스크립트 끝 ---"
                     tasks.append({"id": video_id, "task": full_prompt, "original_title": video_title})
 
                 except Exception as e:
                     self.q.put(("log", f"  - ✗ 오류: '{video_title}' 스크립트 추출 중 문제 발생 - {e}"))
+                    processed_count += 1 # 오류 발생도 처리된 것으로 간주
 
             if not tasks:
-                self.q.put(("log", "--- 현재 배치에 처리할 작업이 없습니다. ---"))
-                continue
+                if videos_to_process: # 처리할 영상이 더 남아있으면 계속
+                    self.q.put(("log", "--- 현재 배치에 처리할 작업이 없습니다. 다음으로 넘어갑니다. ---"))
+                    continue
+                else: # 처리할 영상이 더 없으면 종료
+                    break
 
+            # Gemini API로 배치 처리를 시도합니다.
             try:
-                self.q.put(("log", f"  - Gemini API로 {len(tasks)}개 작업 배치 요청 중 (배치 {i//batch_size + 1})..."))
+                self.q.put(("log", f"  - Gemini API로 {len(tasks)}개 작업 배치 요청 중..."))
                 results = gemini_helper.process_batch_with_gemini(tasks, self.gemini_model_var.get())
                 
                 batch_end_time = time.time()
@@ -637,7 +653,6 @@ class App(tk.Tk):
                     speed = total_transcript_length / batch_duration
                     self.q.put(("log", f"  - 배치 처리 완료. 평균 처리 속도: {speed:.2f} 자/초"))
                     
-                    # CSV 로그 기록
                     log_data = {
                         "date": datetime.now().strftime('%Y-%m-%d'),
                         "model": self.gemini_model_var.get(),
@@ -647,6 +662,7 @@ class App(tk.Tk):
 
                 result_map = {res['id']: res.get('result', f"No result found for ID {res.get('id')}") for res in results}
 
+                # 성공적으로 처리된 결과를 저장합니다.
                 for task in tasks:
                     video_id = task['id']
                     video_title = task['original_title']
@@ -664,17 +680,42 @@ class App(tk.Tk):
                         youtube_helper.log_processed_video(video_id)
                         
                         self.q.put(("log", f"  - ✓ 완료: '{video_title}' 노트 생성 완료"))
+                        processed_count += 1
                     else:
                         self.q.put(("log", f"  - ✗ 오류: '{video_title}' 처리 결과가 없습니다."))
+                        processed_count += 1
 
             except gemini_helper.BatchProcessingError as e:
-                failed_videos_in_batch = [v for v in video_map.values() if v['id'] in [t['id'] for t in tasks]]
-                failed_video_logger.log_failed_videos(failed_videos_in_batch)
-                self.q.put(("log", f"  - ✗ 치명적 오류: Gemini 배치 처리에 실패하여 현재 배치의 영상들을 '실패'로 기록하고 중단합니다. 오류: {e}"))
-                self.q.put(("done", "오류로 인해 작업이 중단되었습니다."))
-                return
+                # 배치 처리 실패 시 재시도 로직
+                batch_id = tuple(sorted([t['id'] for t in tasks]))
+                failure_counts[batch_id] = failure_counts.get(batch_id, 0) + 1
+                count = failure_counts[batch_id]
+
+                self.q.put(("log", f"  - ✗ 경고: Gemini 배치 처리 실패 (시도 {count}/4). 오류: {e}"))
+
+                if count >= 4:
+                    if not videos_to_process:  # 현재 배치가 마지막 남은 배치인 경우
+                        self.q.put(("log", f"  - ✗ 치명적 오류: 마지막 배치가 4회 연속 실패하여 프로그램을 종료합니다."))
+                        failed_videos_in_batch = [v for v in video_map.values() if v['id'] in batch_id]
+                        failed_video_logger.log_failed_videos(failed_videos_in_batch)
+                        self.q.put(("shutdown", "치명적 오류로 인해 작업이 중단되었습니다."))
+                        return
+                    else:
+                        # 마지막 배치가 아니면 대기열 맨 뒤로 이동
+                        self.q.put(("log", f"  - ⓘ 정보: 배치가 4회 실패하여 대기열의 맨 뒤로 이동합니다. 다른 배치 처리 후 재시도합니다."))
+                        videos_to_process.extend(batch_videos)
+                        failure_counts[batch_id] = 0  # 다른 배치를 처리하는 동안 카운트 초기화
+                else:
+                    # 4회 미만 실패 시 대기열 맨 뒤로 이동하여 재시도
+                    self.q.put(("log", f"  - ⓘ 정보: 배치 처리 실패. 잠시 후 재시도하기 위해 대기열 뒤로 보냅니다."))
+                    videos_to_process.extend(batch_videos)
+
             except Exception as e:
-                self.q.put(("log", f"  - ✗ 오류: Gemini 배치 처리 중 문제 발생 - {e}"))
+                # 기타 예외 처리
+                self.q.put(("log", f"  - ✗ 오류: Gemini 배치 처리 중 예상치 못한 문제 발생 - {e}"))
+                # 실패한 배치를 재시도 목록에 추가할 수 있습니다.
+                self.q.put(("log", f"  - ⓘ 정보: 예상치 못한 오류 발생. 해당 배치를 대기열 뒤로 보냅니다."))
+                videos_to_process.extend(batch_videos)
             
         self.q.put(("done", "모든 작업이 완료되었습니다!"))
 
