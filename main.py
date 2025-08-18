@@ -235,7 +235,7 @@ class App(tk.Tk):
         min_duration_frame = ttk.Frame(sliders_frame)
         min_duration_frame.pack(side="left", padx=10)
         ttk.Label(min_duration_frame, text="최소 영상 길이 (분):").pack(side="left")
-        self.min_duration_slider = ttk.Scale(min_duration_frame , length=150,from_=0, to=60, orient="horizontal", variable=self.min_duration_seconds, command=self.update_min_duration_label)
+        self.min_duration_slider = ttk.Scale(min_duration_frame , length=150,from_=60, to=240, orient="horizontal", variable=self.min_duration_seconds, command=self.update_min_duration_label)
         self.min_duration_slider.pack(side="left", padx=5)
         self.min_duration_label = ttk.Label(min_duration_frame, text="2분 0초")
         self.min_duration_label.pack(side="left")
