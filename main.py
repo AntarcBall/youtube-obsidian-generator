@@ -27,6 +27,7 @@ def load_config(filepath="config.json"):
         "gemini_retry_count": 3, # Gemini API 재시도 횟수
         "youtube_url": "https://www.youtube.com/@slow_doctor",
         "min_video_duration": 120, # Default to 2 minutes (120 seconds)
+        "max_video_duration": 7200, # Default to 120 minutes (7200 seconds)
         "run_ip_test": True, # Default to True
         "gemini_model": "gemini-1.5-flash", # Default Gemini model
         "list_load_batch_size": 50, # Default to 50
@@ -105,7 +106,7 @@ class App(tk.Tk):
         self.is_dark_mode = tk.BooleanVar(value=(CONFIG['theme'] == 'dark'))
         self.include_shorts = tk.BooleanVar(value=CONFIG.get('include_shorts', False))
         self.min_duration_seconds = tk.IntVar(value=CONFIG.get('min_video_duration', 120))
-        self.max_duration_seconds = tk.IntVar(value=CONFIG.get('max_video_duration', 3600)) # Default to 60 minutes (3600 seconds)
+        self.max_duration_seconds = tk.IntVar(value=CONFIG.get('max_video_duration', 7200)) # Default to 120 minutes (7200 seconds)
         self.keep_original_title = tk.BooleanVar(value=CONFIG.get('keep_original_title', False))
         self.auto_quit_on_completion = tk.BooleanVar(value=CONFIG.get('auto_quit_on_completion', False))
         self.insert_dash_in_titles = tk.BooleanVar(value=CONFIG.get('insert_dash_in_titles', True))
@@ -247,7 +248,7 @@ class App(tk.Tk):
         ttk.Label(max_duration_frame, text="최대 영상 길이 (분):").pack(side="left")
         self.max_duration_slider = ttk.Scale(max_duration_frame, length=500,from_=0, to=9600, orient="horizontal", variable=self.max_duration_seconds, command=self.update_max_duration_label)
         self.max_duration_slider.pack(side="left", padx=5)
-        self.max_duration_label = ttk.Label(max_duration_frame, text="20분 0초")
+        self.max_duration_label = ttk.Label(max_duration_frame, text="120분 0초")
         self.max_duration_label.pack(side="left")
         self.update_max_duration_label() # 초기값 설정
 
@@ -350,29 +351,56 @@ class App(tk.Tk):
 
     def fetch_videos_thread(self):
         try:
-            self.channel_id = youtube_helper.get_channel_id_from_url(self.channel_url)
-            if not self.channel_id:
-                raise ValueError("유효한 채널 ID를 찾을 수 없습니다.")
+            # 채널 URL인지 플레이리스트 URL인지 확인
+            playlist_id = youtube_helper.get_playlist_id_from_url(self.channel_url)
+            
+            if playlist_id:
+                # 플레이리스트 처리
+                self.playlist_id = playlist_id
+                video_cache = youtube_helper.load_video_list_cache()
+                cached_data = video_cache.get(f"playlist_{self.playlist_id}")
 
-            video_cache = youtube_helper.load_video_list_cache()
-            cached_data = video_cache.get(self.channel_id)
+                if cached_data and not isinstance(cached_data, dict):
+                    print("오래된 형식의 캐시를 발견하여 무효화합니다. 새로 목록을 불러옵니다.")
+                    cached_data = None
 
-            if cached_data and not isinstance(cached_data, dict):
-                print("오래된 형식의 캐시를 발견하여 무효화합니다. 새로 목록을 불러옵니다.")
-                cached_data = None
-
-            if cached_data:
-                print(f"'{self.channel_id}' 채널의 영상 목록을 캐시에서 불러옵니다.")
-                self.all_videos = cached_data.get("videos", [])
-                self.next_page_token = cached_data.get("nextPageToken")
+                if cached_data:
+                    print(f"'{self.playlist_id}' 플레이리스트의 영상 목록을 캐시에서 불러옵니다.")
+                    self.all_videos = cached_data.get("videos", [])
+                    self.next_page_token = cached_data.get("nextPageToken")
+                else:
+                    print("캐시된 영상 목록이 없습니다. API에서 새로 가져옵니다.")
+                    videos_batch, self.next_page_token = youtube_helper.get_videos_from_playlist(
+                        self.playlist_id,
+                        max_results=CONFIG.get("list_load_batch_size", 100)
+                    )
+                    self.all_videos = videos_batch
+                    youtube_helper.save_playlist_videos_to_cache(self.playlist_id, self.all_videos, self.next_page_token)
             else:
-                print("캐시된 영상 목록이 없습니다. API에서 새로 가져옵니다.")
-                videos_batch, self.next_page_token = youtube_helper.get_videos_from_channel(
-                    self.channel_url,
-                    max_results=CONFIG.get("list_load_batch_size", 100)
-                )
-                self.all_videos = videos_batch
-                youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
+                # 채널 처리 (기존 로직)
+                self.channel_id = youtube_helper.get_channel_id_from_url(self.channel_url)
+                if not self.channel_id:
+                    raise ValueError("유효한 채널 ID를 찾을 수 없습니다.")
+
+                video_cache = youtube_helper.load_video_list_cache()
+                cached_data = video_cache.get(self.channel_id)
+
+                if cached_data and not isinstance(cached_data, dict):
+                    print("오래된 형식의 캐시를 발견하여 무효화합니다. 새로 목록을 불러옵니다.")
+                    cached_data = None
+
+                if cached_data:
+                    print(f"'{self.channel_id}' 채널의 영상 목록을 캐시에서 불러옵니다.")
+                    self.all_videos = cached_data.get("videos", [])
+                    self.next_page_token = cached_data.get("nextPageToken")
+                else:
+                    print("캐시된 영상 목록이 없습니다. API에서 새로 가져옵니다.")
+                    videos_batch, self.next_page_token = youtube_helper.get_videos_from_channel(
+                        self.channel_url,
+                        max_results=CONFIG.get("list_load_batch_size", 100)
+                    )
+                    self.all_videos = videos_batch
+                    youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
 
             processed_log = youtube_helper.load_processed_videos_log()
             videos_to_process = []
@@ -519,11 +547,21 @@ class App(tk.Tk):
 
     def _load_more_videos_thread(self):
         try:
-            videos_batch, self.next_page_token = youtube_helper.get_videos_from_channel(
-                self.channel_url,
-                max_results=CONFIG.get("list_load_batch_size", 100),
-                page_token=self.next_page_token
-            )
+            # 채널 URL인지 플레이리스트 URL인지 확인하여 적절한 함수 호출
+            playlist_id = youtube_helper.get_playlist_id_from_url(self.channel_url)
+            
+            if playlist_id:
+                videos_batch, self.next_page_token = youtube_helper.get_videos_from_playlist(
+                    playlist_id,
+                    max_results=CONFIG.get("list_load_batch_size", 100),
+                    page_token=self.next_page_token
+                )
+            else:
+                videos_batch, self.next_page_token = youtube_helper.get_videos_from_channel(
+                    self.channel_url,
+                    max_results=CONFIG.get("list_load_batch_size", 100),
+                    page_token=self.next_page_token
+                )
             
             processed_log = youtube_helper.load_processed_videos_log()
             filtered_batch = []
@@ -561,7 +599,12 @@ class App(tk.Tk):
                 filtered_batch = final_videos
 
             self.all_videos.extend(filtered_batch)
-            youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
+            
+            # 캐시 저장 시 플레이리스트인지 채널인지에 따라 다르게 처리
+            if playlist_id:
+                youtube_helper.save_playlist_videos_to_cache(playlist_id, self.all_videos, self.next_page_token)
+            else:
+                youtube_helper.save_video_list_to_cache(self.channel_id, self.all_videos, self.next_page_token)
             
             self.q.put(("add_videos_to_tree", filtered_batch))
         except Exception as e:

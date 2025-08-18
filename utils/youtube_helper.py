@@ -67,6 +67,19 @@ def save_video_list_to_cache(channel_id, videos, next_page_token):
     except IOError as e:
         print(f"Error saving to video list cache: {e}")
 
+def save_playlist_videos_to_cache(playlist_id, videos, next_page_token):
+    """플레이리스트의 비디오 목록과 다음 페이지 토큰을 JSON 캐시에 저장합니다."""
+    cache = load_video_list_cache()
+    cache[f"playlist_{playlist_id}"] = {
+        "videos": videos,
+        "nextPageToken": next_page_token
+    }
+    try:
+        with open(VIDEO_LIST_CACHE_PATH, 'w', encoding='utf-8') as f:
+            json.dump(cache, f, ensure_ascii=False, indent=4)
+    except IOError as e:
+        print(f"Error saving to video list cache: {e}")
+
 def parse_iso8601_duration(duration_str):
     """ISO 8601 형식의 기간을 'HH:MM:SS' 또는 'MM:SS' 형태로 변환합니다."""
     try:
@@ -118,6 +131,15 @@ def get_channel_id_from_url(url):
                 return None # 검색 실패 시 None 반환
     return None
 
+def get_playlist_id_from_url(url):
+    """
+    유튜브 플레이리스트 URL에서 플레이리스트 ID를 추출합니다.
+    """
+    match = re.search(r'(?:youtube\.com/playlist\?list=)([a-zA-Z0-9_-]+)', url)
+    if match:
+        return match.group(1)
+    return None
+
 def get_videos_from_channel(channel_url, max_results=50, page_token=None):
     """
     채널의 영상 목록을 지정된 개수만큼 가져와 반환합니다.
@@ -136,6 +158,13 @@ def get_videos_from_channel(channel_url, max_results=50, page_token=None):
     except Exception as e:
         raise ValueError(f"채널의 업로드 목록을 가져오는 중 오류 발생: {e}")
 
+    return get_videos_from_playlist(playlist_id, max_results, page_token)
+
+def get_videos_from_playlist(playlist_id, max_results=50, page_token=None):
+    """
+    플레이리스트의 영상 목록을 지정된 개수만큼 가져와 반환합니다.
+    page_token을 사용하여 다음 페이지를 가져올 수 있습니다.
+    """
     video_ids = []
     video_titles = {}
     
