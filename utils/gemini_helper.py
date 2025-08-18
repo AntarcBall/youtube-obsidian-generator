@@ -116,7 +116,7 @@ Here is the actual task list:
 
             # 정규식을 사용하여 JSON 블록을 찾습니다.
             # Markdown 코드 블록 (```json ... ```) 또는 일반 텍스트에 포함된 JSON을 모두 처리합니다.
-            json_match = re.search(r'```json\s*([\s\S]*?)\s*```|([\s\S]*\]|\{[\s\S]*\})', response_text)
+            json_match = re.search(r'```json\s*([\s\S]*?)\s*```|([\s\S]*\]|[{{\s\S]*\}})', response_text)
             
             if json_match:
                 # 첫 번째 캡처 그룹 (```json ... ```) 또는 두 번째 캡처 그룹 (일반 JSON) 중 내용이 있는 것을 사용합니다.
@@ -170,7 +170,7 @@ def generate_title_with_gemini(content, model_name="gemini-1.5-flash"):
         prompt = f"""
 Please create a concise, descriptive filename based on the following text.
 The filename should be in English, under 15 words, and suitable for use as a file name.
-Do not include any special characters that are not allowed in filenames (e.g., \\, /, :, *, ?, ", <, >, |).
+Do not include any special characters that are not allowed in filenames (e.g., \\, /, :, *, ?, \", <, >, |).
 Do not include the file extension.
 
 Content:
@@ -183,7 +183,7 @@ Filename:
         generated_title = "".join([part.text for part in response.parts]).strip()
         
         # 추가적인 정리 작업
-        sanitized_title = re.sub(r'[\\/*?:"<>|]', "", generated_title)
+        sanitized_title = re.sub(r'[\\/*?:\"<>|]', "", generated_title)
         sanitized_title = re.sub(r'\s+', '-', sanitized_title)
         sanitized_title = re.sub(r'-+', '-', sanitized_title).strip('-')
         
@@ -192,4 +192,36 @@ Filename:
         
     except Exception as e:
         print(f"[Gemini] Error generating title: {e}")
+        return None
+
+def generate_korean_youtube_title(content):
+    """
+    주어진 내용의 일부를 기반으로 한국어 유튜브 영상 제목을 생성합니다.
+    """
+    try:
+        model_name = "gemini-2.5-flash-lite"
+        print(f"[Gemini] Generating Korean YouTube title with model: {model_name}")
+        model = genai.GenerativeModel(model_name)
+        
+        prompt = f"""
+다음 텍스트의 내용을 기반으로, 흥미를 유발하는 한국어 유튜브 영상 제목을 1문장으로 생성해주세요.
+제목은 짧고 간결해야 합니다.
+
+내용:
+{content[:300]}
+
+제목:
+"""
+        
+        response = model.generate_content(prompt)
+        generated_title = "".join([part.text for part in response.parts]).strip()
+        
+        # 제목에서 따옴표나 해시태그 제거
+        generated_title = generated_title.replace('"', '').replace("'", "").replace("#", "")
+        
+        print(f"[Gemini] Generated Korean title: {generated_title}")
+        return generated_title
+        
+    except Exception as e:
+        print(f"[Gemini] Error generating Korean title: {e}")
         return None

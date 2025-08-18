@@ -4,7 +4,7 @@
 import os
 import re
 import json
-from .gemini_helper import generate_title_with_gemini
+from .gemini_helper import generate_title_with_gemini, generate_korean_youtube_title
 
 def _sanitize_filename(title, insert_dash):
     """
@@ -26,14 +26,20 @@ def _sanitize_filename(title, insert_dash):
 
 def generate_filename_from_content(content, insert_dash):
     """
-    내용의 첫 줄을 기반으로 파일명을 생성합니다.
+    내용의 전반부 300자를 기반으로 Gemini를 사용하여 한국어 유튜브 영상 제목을 생성합니다.
     """
     if not content:
         return "untitled"
         
-    # 내용의 첫 줄을 제목으로 가정
-    first_line = content.strip().split('\n')[0]
-    return _sanitize_filename(first_line, insert_dash)
+    # Gemini를 사용하여 제목 생성
+    generated_title = generate_korean_youtube_title(content)
+    if generated_title:
+        return _sanitize_filename(generated_title, insert_dash)
+    else:
+        # 실패 시 기존 로직 (첫 줄 기반)으로 대체
+        print("경고: Gemini 제목 생성 실패. 내용의 첫 줄을 기반으로 파일명을 생성합니다.")
+        first_line = content.strip().split('\n')[0]
+        return _sanitize_filename(first_line, insert_dash)
 
 def _format_bold_spacing(content):
     """
@@ -64,14 +70,8 @@ def save_as_obsidian_note(path, content, keep_original_title=False, original_tit
     if keep_original_title and original_title:
         base_filename = _sanitize_filename(original_title, insert_dash)
     else:
-        # Gemini를 사용하여 파일명 생성
-        generated_title = generate_title_with_gemini(content)
-        if generated_title:
-            base_filename = _sanitize_filename(generated_title, insert_dash)
-        else:
-            # Gemini 호출 실패 시 기존 방식으로 대체
-            print("경고: Gemini 파일명 생성 실패. 내용의 첫 줄을 기반으로 파일명을 생성합니다.")
-            base_filename = generate_filename_from_content(content, insert_dash)
+        # Gemini를 사용하여 한국어 제목 생성
+        base_filename = generate_filename_from_content(content, insert_dash)
 
     if not base_filename:
         base_filename = "untitled"
