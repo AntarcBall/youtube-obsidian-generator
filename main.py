@@ -50,23 +50,30 @@ def load_config(filepath="config.json"):
     except (json.JSONDecodeError, IOError):
         return defaults
 
-def load_prompt_from_json(use_other=False):
-    """JSON 파일에서 기본 프롬프트를 로드합니다."""
-    filename = "other_prompt.json" if use_other else "default_prompt.json"
+def load_prompt(use_other=False):
+    """프롬프트 파일(.json 또는 .txt)에서 프롬프트를 로드합니다."""
+    if use_other:
+        filename = "other_prompt.txt"
+    else:
+        filename = "default_prompt.json"
+        
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(script_dir, filename)
-    
-    if not os.path.exists(json_path):
-        print(f"경고: {json_path} 파일을 찾을 수 없습니다. 기본 프롬프트를 사용합니다.")
-        # other_prompt.json이 없을 경우 default_prompt.json으로 대체
+    prompt_path = os.path.join(script_dir, filename)
+
+    if not os.path.exists(prompt_path):
+        print(f"경고: {prompt_path} 파일을 찾을 수 없습니다. 기본 프롬프트를 사용합니다.")
         if use_other:
-            return load_prompt_from_json(use_other=False)
+            # other_prompt.txt가 없을 경우 default_prompt.json으로 대체
+            return load_prompt(use_other=False)
         return "다음 텍스트를 요약하고 정리해주세요:\n\n"
-    
+
     try:
-        with open(json_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            return data.get("prompt", "다음 텍스트를 요약하고 정리해주세요:\n\n")
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            if filename.endswith(".json"):
+                data = json.load(f)
+                return data.get("prompt", "다음 텍스트를 요약하고 정리해주세요:\n\n")
+            else: # .txt 파일의 경우
+                return f.read()
     except (json.JSONDecodeError, IOError) as e:
         print(f"경고: 프롬프트 파일 로딩 실패 - {e}. 기본 프롬프트를 사용합니다.")
         return "다음 텍스트를 요약하고 정리해주세요:\n\n"
@@ -83,7 +90,7 @@ def save_config(config, filepath="config.json"):
 
 # --- 기본 설정 ---
 CONFIG = load_config()
-DEFAULT_PROMPT = load_prompt_from_json(use_other=CONFIG.get("use_other_prompt", False))
+DEFAULT_PROMPT = load_prompt(use_other=CONFIG.get("use_other_prompt", False))
 print(f"Loaded gemini_batch_size from config: {CONFIG.get('gemini_batch_size')}")
 
 
@@ -178,7 +185,7 @@ class App(tk.Tk):
             self.min_cos_similarity.set("0.8")
 
     def update_prompt_display(self):
-        new_prompt = load_prompt_from_json(use_other=self.use_other_prompt.get())
+        new_prompt = load_prompt(use_other=self.use_other_prompt.get())
         self.prompt_text.delete("1.0", tk.END)
         self.prompt_text.insert(tk.END, new_prompt)
         CONFIG['use_other_prompt'] = self.use_other_prompt.get()

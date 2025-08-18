@@ -2,7 +2,7 @@ cache/
 .env
 __pycache__/
 MYAPI.json
-other_prompt.json
+other_prompt.txt
 processing_log.csv
 failed_videos.json
 gemini_error_response.txt
