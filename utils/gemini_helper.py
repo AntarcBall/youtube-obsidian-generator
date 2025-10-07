@@ -65,6 +65,7 @@ def check_gemini_api():
 def process_batch_with_gemini(tasks, model_name=None):
     """
     여러 작업을 배치로 묶어 Gemini API에 한 번에 요청하고 결과를 반환합니다.
+    배치 크기가 1인 경우, JSON 래핑 없이 직접 처리하여 파싱 오류를 방지합니다.
     파싱 오류 발생 시 설정된 횟수만큼 재시도하며, 최종 실패 시 BatchProcessingError를 발생시킵니다.
     
     Args:
@@ -83,6 +84,44 @@ def process_batch_with_gemini(tasks, model_name=None):
     
     model = genai.GenerativeModel(effective_model_name)
 
+    # 배치 크기가 1인 경우, JSON 래핑 없이 직접 처리
+    if len(tasks) == 1:
+        task = tasks[0]
+        task_id = task['id']
+        task_content = task['task']
+        
+        print(f"[Gemini] Single task request sent for task ID: {task_id}")
+        
+        last_error = None
+        for attempt in range(retry_count):
+            try:
+                response = model.generate_content(task_content)
+                response_text = "".join([part.text for part in response.parts])
+                
+                if not response_text.strip():
+                    raise ValueError("Received empty response from Gemini API.")
+                
+                print(f"[Gemini] Single task response received successfully.")
+                return [{"id": task_id, "result": response_text.strip()}]
+                
+            except Exception as e:
+                last_error = e
+                print(f"[Gemini] Error processing single task on attempt {attempt + 1}: {e}")
+                
+                if attempt < retry_count - 1:
+                    print("[Gemini] Retrying after a short delay...")
+                    time.sleep(2)
+                else:
+                    print(f"[Gemini] All {retry_count} retries failed for single task.")
+                    raise BatchProcessingError(f"Failed to process single task after {retry_count} attempts. Last error: {last_error}")
+        
+        # 재시도 루프 후에도 실패한 경우
+        raise BatchProcessingError(f"Failed to process single task after {retry_count} attempts. Last error: {last_error}")
+
+        # 재시도 루프 후에도 실패한 경우
+        raise BatchProcessingError(f"Failed to process single task after {retry_count} attempts. Last error: {last_error}")
+
+    # 배치 크기가 2 이상인 경우, JSON 래핑 방식 사용
     prompt = f"""
 You are a bot that responds only in JSON format.
 Below is a JSON array of tasks to perform. Execute the 'task' for each item and return the results as a JSON array with the corresponding 'id'.
