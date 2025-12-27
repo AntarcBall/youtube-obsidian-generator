@@ -6,3 +6,7 @@ other_prompt.txt
 processing_log.csv
 failed_videos.json
 gemini_error_response.txt
+
+.cache/processed_videos.json
+.cache/video_list_cache.json
+.gitignore

@@ -66,6 +66,10 @@
     "use_other_prompt": {
       "type": "boolean",
       "description": "Whether to use other_prompt.txt instead of the default prompt."
+    },
+    "split_transcript": {
+      "type": "boolean",
+      "description": "Whether to split the transcript into two parts."
     }
   },
   "required": [
@@ -82,6 +86,7 @@
     "keep_original_title",
     "auto_quit_on_completion",
     "insert_dash_in_titles",
-    "use_other_prompt"
+    "use_other_prompt",
+    "split_transcript"
   ]
 }

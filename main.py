@@ -34,7 +34,8 @@ def load_config(filepath="config.json"):
         "include_shorts": False, # Default to False
         "keep_original_title": False, # Default to False
         "auto_quit_on_completion": False, # Default to False
-        "use_other_prompt": False 
+        "use_other_prompt": False,
+        "split_transcript": False
     }
 
     if not os.path.exists(config_path):
@@ -114,6 +115,7 @@ class App(tk.Tk):
         self.keyword = tk.StringVar()
         self.min_cos_similarity = tk.StringVar(value="0.8")
         self.use_other_prompt = tk.BooleanVar(value=CONFIG.get('use_other_prompt', False))
+        self.split_transcript = tk.BooleanVar(value=CONFIG.get('split_transcript', False))
         
         # --- 스타일 설정 ---
         self.style = ttk.Style(self)
@@ -221,6 +223,7 @@ class App(tk.Tk):
         row2_frame.pack(fill='x', pady=(5, 0))
         ttk.Checkbutton(row2_frame, text="완료 시 자동 종료", variable=self.auto_quit_on_completion).pack(side="left", padx=10)
         ttk.Checkbutton(row2_frame, text="제목에 대시 삽입", variable=self.insert_dash_in_titles).pack(side="left", padx=10)
+        ttk.Checkbutton(row2_frame, text="스크립트 반으로 나누기", variable=self.split_transcript).pack(side="left", padx=10)
 
         # 슬라이더 프레임
         sliders_frame = ttk.Frame(control_frame)
@@ -670,8 +673,34 @@ class App(tk.Tk):
                     
                     total_transcript_length += len(transcript)
                     prompt_with_title = f"영상 제목: {video_title}\n\n{self.user_prompt}"
-                    full_prompt = f"{prompt_with_title}\n\n--- 원본 스크립트 ---{transcript}\n--- 원본 스크립트 끝 ---"
-                    tasks.append({"id": video_id, "task": full_prompt, "original_title": video_title})
+                    
+                    if self.split_transcript.get():
+                        mid = len(transcript) // 2
+                        left_break = transcript.rfind('\n', 0, mid)
+                        right_break = transcript.find('\n', mid)
+
+                        split_idx = mid
+                        if left_break != -1 and right_break != -1:
+                            if (mid - left_break) < (right_break - mid):
+                                split_idx = left_break
+                            else:
+                                split_idx = right_break
+                        elif left_break != -1:
+                            split_idx = left_break
+                        elif right_break != -1:
+                            split_idx = right_break
+                        
+                        part1 = transcript[:split_idx].strip()
+                        part2 = transcript[split_idx:].strip()
+
+                        full_prompt_1 = f"{prompt_with_title} (Part 1)\n\n--- 원본 스크립트 (1/2) ---{part1}\n--- 원본 스크립트 끝 ---"
+                        tasks.append({"id": f"{video_id}_1", "task": full_prompt_1, "original_title": f"{video_title}_1", "original_video_id": video_id})
+                        
+                        full_prompt_2 = f"{prompt_with_title} (Part 2)\n\n--- 원본 스크립트 (2/2) ---{part2}\n--- 원본 스크립트 끝 ---"
+                        tasks.append({"id": f"{video_id}_2", "task": full_prompt_2, "original_title": f"{video_title}_2", "original_video_id": video_id})
+                    else:
+                        full_prompt = f"{prompt_with_title}\n\n--- 원본 스크립트 ---{transcript}\n--- 원본 스크립트 끝 ---"
+                        tasks.append({"id": video_id, "task": full_prompt, "original_title": video_title, "original_video_id": video_id})
 
                 except Exception as e:
                     self.q.put(("log", f"  - ✗ 오류: '{video_title}' 스크립트 추출 중 문제 발생 - {e}"))
@@ -709,6 +738,7 @@ class App(tk.Tk):
                 for task in tasks:
                     video_id = task['id']
                     video_title = task['original_title']
+                    real_video_id = task.get('original_video_id', video_id)
                     
                     if video_id in result_map:
                         processed_content = result_map[video_id]
@@ -720,13 +750,13 @@ class App(tk.Tk):
                         self.q.put(("log", f"  - '{video_title}' 내용 가공 완료. 노트 저장 중..."))
                         file_helper.save_as_obsidian_note(self.obsidian_path, processed_content, self.keep_original_title.get(), video_title, self.insert_dash_in_titles.get())
                         
-                        youtube_helper.log_processed_video(video_id)
+                        youtube_helper.log_processed_video(real_video_id)
                         
                         self.q.put(("log", f"  - ✓ 완료: '{video_title}' 노트 생성 완료"))
-                        processed_count += 1
+                        processed_count += 1 if not self.split_transcript.get() else 0.5 # 분할 시 카운트 조정
                     else:
                         self.q.put(("log", f"  - ✗ 오류: '{video_title}' 처리 결과가 없습니다."))
-                        processed_count += 1
+                        processed_count += 1 if not self.split_transcript.get() else 0.5
 
             except gemini_helper.BatchProcessingError as e:
                 # 배치 처리 실패 시 재시도 로직
@@ -739,7 +769,12 @@ class App(tk.Tk):
                 if count >= 4:
                     if not videos_to_process:  # 현재 배치가 마지막 남은 배치인 경우
                         self.q.put(("log", f"  - ✗ 치명적 오류: 마지막 배치가 4회 연속 실패하여 프로그램을 종료합니다."))
-                        failed_videos_in_batch = [v for v in video_map.values() if v['id'] in batch_id]
+                        
+                        failed_original_ids = set()
+                        for t in tasks:
+                            failed_original_ids.add(t.get('original_video_id', t['id']))
+                        
+                        failed_videos_in_batch = [v for v in video_map.values() if v['id'] in failed_original_ids]
                         failed_video_logger.log_failed_videos(failed_videos_in_batch)
                         self.q.put(("shutdown", "치명적 오류로 인해 작업이 중단되었습니다."))
                         return
@@ -791,10 +826,12 @@ class App(tk.Tk):
                     if self.keyword_text:
                         values += (video.get('cosine_similarity', 'N/A'),)
                     self.tree.insert("", "end", values=values, iid=video['id'], tags=tags)
-                if self.next_page_token:
-                    self.load_more_btn.config(state="normal", text="추가 로드")
-                else:
-                    self.load_more_btn.config(state="disabled", text="더 이상 영상 없음")
+                
+                if hasattr(self, 'load_more_btn') and self.load_more_btn.winfo_exists():
+                    if self.next_page_token:
+                        self.load_more_btn.config(state="normal", text="추가 로드")
+                    else:
+                        self.load_more_btn.config(state="disabled", text="더 이상 영상 없음")
             elif msg_type == "error":
                 messagebox.showerror("오류", data)
                 if hasattr(self, 'confirm_btn1'):

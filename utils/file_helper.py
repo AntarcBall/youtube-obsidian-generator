@@ -45,6 +45,7 @@ def _format_bold_spacing(content):
     """
     내용에서 짝수 번째 '**' 뒤에 공백을 추가하여 마크다운 뷰어에서 더 잘 보이게 합니다.
     """
+    content.replace('***','---')
     parts = content.split('**')
     if len(parts) < 3:
         return content
