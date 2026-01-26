@@ -3,9 +3,9 @@
     "font_size": 11,
     "theme": "dark",
     "gemini_model": "gemini-3-flash-preview",
-    "obsidian_path": "C:/Users/bounc/OneDrive/문서/GNifiedNotes/Asdfsdf",
+    "obsidian_path": "C:/Users/bounc/OneDrive/문서/GNifiedNotes/fffDFGDdfdf",
     "gemini_batch_size": 1,
-    "youtube_url": "https://www.youtube.com/watch?v=RSNuB9pj9P8&t=29s",
+    "youtube_url": "https://www.youtube.com/playlist?list=PL1wpF5k0tdIve4idTp3-FX2ZY7ks_BKeU",
     "min_video_duration": 120,
     "max_video_duration": 7200,
     "run_ip_test": false,
@@ -16,5 +16,7 @@
     "insert_dash_in_titles": false,
     "use_other_prompt": true,
     "gemini_retry_count": 4,
-    "split_transcript": false
+    "split_transcript": false,
+    "split_mode": "none",
+    "smart_split_interval": 20
 }

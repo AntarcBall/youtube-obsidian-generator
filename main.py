@@ -35,7 +35,9 @@ def load_config(filepath="config.json"):
         "keep_original_title": False, # Default to False
         "auto_quit_on_completion": False, # Default to False
         "use_other_prompt": False,
-        "split_transcript": False
+        "split_transcript": False,
+        "split_mode": "none", # "none", "half", "smart"
+        "smart_split_interval": 20 # 10, 20, 30, 40
     }
 
     if not os.path.exists(config_path):
@@ -115,8 +117,13 @@ class App(tk.Tk):
         self.keyword = tk.StringVar()
         self.min_cos_similarity = tk.StringVar(value="0.8")
         self.use_other_prompt = tk.BooleanVar(value=CONFIG.get('use_other_prompt', False))
-        self.split_transcript = tk.BooleanVar(value=CONFIG.get('split_transcript', False))
-        
+        self.use_other_prompt = tk.BooleanVar(value=CONFIG.get('use_other_prompt', False))
+        # self.split_transcript removed in favor of split_mode
+        self.split_mode_var = tk.StringVar(value=CONFIG.get('split_mode', 'none'))
+        if CONFIG.get('split_transcript', False) and self.split_mode_var.get() == 'none':
+             self.split_mode_var.set('half') # Backward compatibility
+        self.smart_split_interval = tk.IntVar(value=CONFIG.get('smart_split_interval', 20))
+                
         # --- 스타일 설정 ---
         self.style = ttk.Style(self)
         self.update_styles()
@@ -223,7 +230,25 @@ class App(tk.Tk):
         row2_frame.pack(fill='x', pady=(5, 0))
         ttk.Checkbutton(row2_frame, text="완료 시 자동 종료", variable=self.auto_quit_on_completion).pack(side="left", padx=10)
         ttk.Checkbutton(row2_frame, text="제목에 대시 삽입", variable=self.insert_dash_in_titles).pack(side="left", padx=10)
-        ttk.Checkbutton(row2_frame, text="스크립트 반으로 나누기", variable=self.split_transcript).pack(side="left", padx=10)
+
+        # 스크립트 분할 설정 프레임
+        split_frame = ttk.LabelFrame(control_frame, text="스크립트 분할 설정", padding=(10, 5))
+        split_frame.pack(fill='x', pady=(5, 0))
+        
+        ttk.Radiobutton(split_frame, text="분할 안 함", variable=self.split_mode_var, value="none", command=self.update_split_ui).pack(side="left", padx=5)
+        ttk.Radiobutton(split_frame, text="반으로 나누기", variable=self.split_mode_var, value="half", command=self.update_split_ui).pack(side="left", padx=5)
+        ttk.Radiobutton(split_frame, text="지능적 분할하기", variable=self.split_mode_var, value="smart", command=self.update_split_ui).pack(side="left", padx=5)
+        
+        self.smart_slider_frame = ttk.Frame(split_frame)
+        self.smart_slider_frame.pack(side="left", padx=20)
+        
+        ttk.Label(self.smart_slider_frame, text="단위(분):").pack(side="left")
+        self.smart_split_slider = ttk.Scale(self.smart_slider_frame, from_=10, to=40, orient="horizontal", variable=self.smart_split_interval, command=self.snap_smart_slider)
+        self.smart_split_slider.pack(side="left", padx=5)
+        self.smart_split_label = ttk.Label(self.smart_slider_frame, text="20분")
+        self.smart_split_label.pack(side="left")
+        
+        self.update_split_ui() # 초기 상태 설정
 
         # 슬라이더 프레임
         sliders_frame = ttk.Frame(control_frame)
@@ -249,7 +274,7 @@ class App(tk.Tk):
         max_duration_frame = ttk.Frame(sliders_frame)
         max_duration_frame.pack(side="left", padx=10)
         ttk.Label(max_duration_frame, text="최대 영상 길이 (분):").pack(side="left")
-        self.max_duration_slider = ttk.Scale(max_duration_frame, length=500,from_=0, to=9600, orient="horizontal", variable=self.max_duration_seconds, command=self.update_max_duration_label)
+        self.max_duration_slider = ttk.Scale(max_duration_frame, length=500,from_=0, to=12000, orient="horizontal", variable=self.max_duration_seconds, command=self.update_max_duration_label)
         self.max_duration_slider.pack(side="left", padx=5)
         self.max_duration_label = ttk.Label(max_duration_frame, text="120분 0초")
         self.max_duration_label.pack(side="left")
@@ -318,6 +343,108 @@ class App(tk.Tk):
         ttk.Button(bottom_button_frame, text="글씨 크게", command=lambda: self.change_font_size(1)).pack(side="right", padx=5)
         
         return scene1
+
+    def update_split_ui(self):
+        if self.split_mode_var.get() == "smart":
+            for child in self.smart_slider_frame.winfo_children():
+                child.configure(state="normal")
+        else:
+            for child in self.smart_slider_frame.winfo_children():
+                child.configure(state="disabled")
+                
+    def snap_smart_slider(self, val):
+        val = float(val)
+        step = 10
+        snapped_val = round(val / step) * step
+        self.smart_split_interval.set(int(snapped_val))
+        self.smart_split_label.config(text=f"{int(snapped_val)}분")
+
+    def calculate_smart_splits(self, total_seconds, interval_minutes):
+        unit = interval_minutes * 60
+        if total_seconds < unit:
+            return [total_seconds]
+        
+        # 61분 (20단위) -> 20, 20, 21 (OK)
+        # 70분 (20단위) -> 20, 20, 30 (OK - 30 is 1.5x)
+        # 75분 (20단위) -> 20, 20, 20, 15 (OK - 15 is 0.75x)
+        
+        count = int(total_seconds // unit)
+        remainder = total_seconds % unit
+        
+        chunks = [unit] * count
+        
+        if remainder > 0:
+            # 0.5배 미만이면 앞부분과 합침
+            if remainder <= (0.5 * unit):
+                if chunks:
+                    chunks[-1] += remainder
+                else:
+                    chunks.append(remainder)
+            else:
+                chunks.append(remainder)
+        
+        # 만약 chunks끼리 합쳐서 너무 큰 것이 있으면 (없을 것으로 예상되지만) 확인
+        # 현재 로직상 chunks[-1]은 최대 1.5 * unit 미만임 (remainder < 0.5 unit 이므로 unit + remainder < 1.5 unit)
+        return chunks
+
+    def smart_split_transcript(self, transcript, time_chunks, total_seconds):
+        if not transcript:
+            return []
+            
+        total_len = len(transcript)
+        text_chunks = []
+        start_idx = 0
+        
+        current_cumulative_time = 0
+        
+        for i, chunk_duration in enumerate(time_chunks):
+            if i == len(time_chunks) - 1:
+                # 마지막 청크는 남은 텍스트 전부 사용
+                text_chunks.append(transcript[start_idx:].strip())
+                break
+                
+            current_cumulative_time += chunk_duration
+            target_ratio = current_cumulative_time / total_seconds
+            target_idx = int(total_len * target_ratio)
+            
+            # target_idx 근처에서 가장 적절한 문장 끊김 찾기
+            # 검색 범위: 전체 길이의 ±5%
+            margin = max(100, int(total_len * 0.05))
+            search_start = max(start_idx, target_idx - margin)
+            search_end = min(total_len, target_idx + margin)
+            
+            candidates = []
+            
+            # 1. 줄바꿈 찾기
+            pos = transcript.rfind('\n', search_start, search_end)
+            if pos != -1: candidates.append(pos)
+            pos = transcript.find('\n', search_start, search_end)
+            if pos != -1: candidates.append(pos)
+            
+            # 2. 문장 부호 찾기
+            for p in ['. ', '? ', '! ']:
+                pos = transcript.rfind(p, search_start, search_end)
+                if pos != -1: candidates.append(pos + 1)
+                pos = transcript.find(p, search_start, search_end)
+                if pos != -1: candidates.append(pos + 1)
+                
+            best_split = target_idx
+            if candidates:
+                best_split = min(candidates, key=lambda x: abs(x - target_idx))
+            else:
+                # 공백이라도 찾기
+                pos = transcript.rfind(' ', search_start, search_end)
+                if pos != -1:
+                    best_split = pos
+
+            if best_split <= start_idx:
+                best_split = target_idx
+                
+            chunk_text = transcript[start_idx:best_split].strip()
+            text_chunks.append(chunk_text)
+            start_idx = best_split
+            
+        return text_chunks
 
     def browse_path(self):
         directory = filedialog.askdirectory()
@@ -675,7 +802,9 @@ class App(tk.Tk):
                     total_transcript_length += len(transcript)
                     prompt_with_title = f"영상 제목: {video_title}\n\n{self.user_prompt}"
                     
-                    if self.split_transcript.get():
+                    split_mode = self.split_mode_var.get()
+                    
+                    if split_mode == 'half':
                         mid = len(transcript) // 2
                         left_break = transcript.rfind('\n', 0, mid)
                         right_break = transcript.find('\n', mid)
@@ -699,6 +828,31 @@ class App(tk.Tk):
                         
                         full_prompt_2 = f"{prompt_with_title} (Part 2)\n\n--- 원본 스크립트 (2/2) ---{part2}\n--- 원본 스크립트 끝 ---"
                         tasks.append({"id": f"{video_id}_2", "task": full_prompt_2, "original_title": f"{video_title}_2", "original_video_id": video_id})
+                    
+                    elif split_mode == 'smart':
+                        # 지능적 분할
+                        interval_min = self.smart_split_interval.get()
+                        total_secs = video.get('total_seconds', 0)
+                        
+                        if total_secs == 0: 
+                             # fallback
+                             full_prompt = f"{prompt_with_title}\n\n--- 원본 스크립트 ---{transcript}\n--- 원본 스크립트 끝 ---"
+                             tasks.append({"id": video_id, "task": full_prompt, "original_title": video_title, "original_video_id": video_id})
+                        else:
+                            time_chunks = self.calculate_smart_splits(total_secs, interval_min)
+                            text_chunks = self.smart_split_transcript(transcript, time_chunks, total_secs)
+                            
+                            total_parts = len(text_chunks)
+                            for i, part in enumerate(text_chunks):
+                                part_num = i + 1
+                                full_prompt = f"{prompt_with_title} (Part {part_num})\n\n--- 원본 스크립트 ({part_num}/{total_parts}) ---{part}\n--- 원본 스크립트 끝 ---"
+                                tasks.append({
+                                    "id": f"{video_id}_{part_num}", 
+                                    "task": full_prompt, 
+                                    "original_title": f"{video_title}_{part_num}", 
+                                    "original_video_id": video_id
+                                })
+                    
                     else:
                         full_prompt = f"{prompt_with_title}\n\n--- 원본 스크립트 ---{transcript}\n--- 원본 스크립트 끝 ---"
                         tasks.append({"id": video_id, "task": full_prompt, "original_title": video_title, "original_video_id": video_id})
@@ -754,10 +908,10 @@ class App(tk.Tk):
                         youtube_helper.log_processed_video(real_video_id)
                         
                         self.q.put(("log", f"  - ✓ 완료: '{video_title}' 노트 생성 완료"))
-                        processed_count += 1 if not self.split_transcript.get() else 0.5 # 분할 시 카운트 조정
+                        processed_count += 1 if self.split_mode_var.get() == 'none' else (1.0 / max(1, len(tasks))) # 대략적 카운트
                     else:
                         self.q.put(("log", f"  - ✗ 오류: '{video_title}' 처리 결과가 없습니다."))
-                        processed_count += 1 if not self.split_transcript.get() else 0.5
+                        processed_count += 1 if self.split_mode_var.get() == 'none' else (1.0 / max(1, len(tasks)))
 
             except gemini_helper.BatchProcessingError as e:
                 # 배치 처리 실패 시 재시도 로직
@@ -835,9 +989,9 @@ class App(tk.Tk):
                         self.load_more_btn.config(state="disabled", text="더 이상 영상 없음")
             elif msg_type == "error":
                 messagebox.showerror("오류", data)
-                if hasattr(self, 'confirm_btn1'):
+                if hasattr(self, 'confirm_btn1') and self.confirm_btn1.winfo_exists():
                     self.confirm_btn1.config(state="normal", text="영상 목록 불러오기")
-                if hasattr(self, 'load_more_btn'):
+                if hasattr(self, 'load_more_btn') and self.load_more_btn.winfo_exists():
                     self.load_more_btn.config(state="normal", text="추가 로드")
             elif msg_type == "log":
                 self.log_message(data)
